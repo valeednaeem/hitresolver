@@ -6,6 +6,46 @@ Significant technical and product decisions, with rationale, alternatives, benef
 
 ---
 
+## D-016 — Scoped `minimatch` override resolves the single remaining audit advisory
+
+**Date:** 2026-11-16 · **Phase:** 2
+
+**Decided:** Added `"overrides": { "@typescript-eslint/typescript-estree": { "minimatch": "^11.0.8" } }` to `package.json` after confirming via `npm audit --json` that all seven moderate findings traced to one advisory (GHSA-g3hv-75wg-m249, minimatch DoS via globparts amplification via `globparts`) inside `@typescript-eslint/typescript-estree@8.72.2` → `minimatch@10.2.6`. The affected packages are all **dev tooling** (eslint / typescript-eslint chain); no production dependency is affected.
+
+**Why:** The brief required inspecting the full audit report, identifying paths, distinguishing prod/dev relevance, and checking safe targeted upgrades — not blind `npm audit fix`. The chosen override is a narrow, targeted, semver-compatible major bump on one vulnerable path, and was verified by re-running lint, tests, and typecheck afterwards.
+
+**Benefits:** `npm audit` now reports **0 vulnerabilities**; no scope creep into unrelated dependency upgrades.
+**Reversible:** Yes.
+
+---
+
+## D-015 — Verdict Dashboard synthesises signals but never combines them into one score
+
+**Date:** 2026-11-16 · **Phase:** 2
+
+**Decided:** `evaluateDashboard` returns the four independent framework signals (Pros & Cons %, matrix leader/margin, SWOT posture, completeness) plus rule-based recommendations. No composite / overall score is computed — combining incompatible scales would manufacture false authority (§4.1, brief §5F, spec §4.5).
+
+**Why:** The brief's core anti-pattern: "do not simply add unrelated scores together and call them a scientific overall verdict." The dashboard instead labels each signal CALC ACID-style source and offers only named, triggered recommendations.
+
+**Benefits:** Honest, testable, architecturally clean synthesis layer.
+**Risks:** Dashboard may look less "decisive" — accepted trade-off, communicated via recommendations/completeness.
+**Reversible:** Yes.
+
+---
+
+## D-014 — Decision engine stays pure and dependency-free; no formula lives in UI or state
+
+**Date:** 2026-11-16 · **Phase:** 2
+
+**Decided:** `src/engine/` is pure TypeScript with zero imports from React, Next.js, DOM, storage or AI providers; all §1–§4 formulas live there; panels call the engine (memoised per input change) and never re-implement maths.
+
+**Why:** Framework independence (D-003), determinism (§0), and the Phase 2 exit gate ("no UI code may re-implement any formula in this document").
+
+**Benefits:** Testable headlessly, portable to DB/auth later, single source of truth.
+**Reversible:** Yes.
+
+---
+
 ## D-013 — Pre-hydration bootstrap state instead of generated ids during prerender
 
 **Date:** 2026-11-16 · **Phase:** 1

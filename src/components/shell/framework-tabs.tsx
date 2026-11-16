@@ -1,13 +1,16 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useState, type ReactElement } from "react";
 import {
   CompassIcon,
   GridIcon,
   LayersIcon,
   ScaleIcon,
 } from "@/components/ui/icons";
-import { PhasePlaceholder } from "@/components/ui/brand";
+import { ProsConsPanel } from "@/components/framework/proscons-panel";
+import { MatrixPanel } from "@/components/framework/matrix-panel";
+import { SwotPanel } from "@/components/framework/swot-panel";
+import { VerdictPanel } from "@/components/framework/verdict-panel";
 
 const TABS = [
   {
@@ -77,6 +80,14 @@ const TABS = [
 ] as const;
 
 export type TabId = (typeof TABS)[number]["id"];
+
+/** Real panels per tab — replaced every Phase 2 placeholder (Phase 2). */
+const PANELS: Record<TabId, ReactElement> = {
+  proscons: <ProsConsPanel />,
+  comparison: <MatrixPanel />,
+  swot: <SwotPanel />,
+  verdict: <VerdictPanel />,
+};
 
 /**
  * Accessible tablist following the ARIA tabs pattern: roving tabindex,
@@ -154,16 +165,7 @@ export function FrameworkTabs({ children }: { children?: React.ReactNode }) {
         tabIndex={0}
         className="pt-5 outline-none"
       >
-        {children ?? (
-          <div className="bg-surface border border-line rounded-xl shadow-sm">
-            <PhasePlaceholder
-              phase={current.phase}
-              title={current.title}
-              description={current.description}
-              bullets={[...current.bullets]}
-            />
-          </div>
-        )}
+        {children ?? PANELS[current.id]}
       </div>
     </div>
   );

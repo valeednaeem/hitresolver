@@ -287,6 +287,7 @@ function validateDecision(raw: unknown, path: string): ValidationResult<void> {
     if (!Array.isArray(comparison.criteria)) {
       errors.push(`${path}.comparison.criteria must be an array.`);
     } else {
+      const seenCriterionIds = new Set<string>();
       comparison.criteria.forEach((crit, i) => {
         push(
           validateCriterion(
@@ -295,6 +296,12 @@ function validateDecision(raw: unknown, path: string): ValidationResult<void> {
             optionIds,
           ),
         );
+        if (isPlainObject(crit) && typeof crit.id === "string") {
+          if (seenCriterionIds.has(crit.id)) {
+            errors.push(`${path}.comparison.criteria[${i}].id is duplicated.`);
+          }
+          seenCriterionIds.add(crit.id);
+        }
       });
     }
   }
@@ -310,9 +317,16 @@ function validateDecision(raw: unknown, path: string): ValidationResult<void> {
         errors.push(`${path}.prosCons.${key} must be an array.`);
         continue;
       }
-      list.forEach((item, i) =>
-        push(validateWeightedItem(item, `${path}.prosCons.${key}[${i}]`)),
-      );
+      const seenItemIds = new Set<string>();
+      list.forEach((item, i) => {
+        push(validateWeightedItem(item, `${path}.prosCons.${key}[${i}]`));
+        if (isPlainObject(item) && typeof item.id === "string") {
+          if (seenItemIds.has(item.id)) {
+            errors.push(`${path}.prosCons.${key}[${i}].id is duplicated.`);
+          }
+          seenItemIds.add(item.id);
+        }
+      });
     }
   }
 
@@ -327,9 +341,16 @@ function validateDecision(raw: unknown, path: string): ValidationResult<void> {
         errors.push(`${path}.swot.${quadrant} must be an array.`);
         continue;
       }
-      list.forEach((item, i) =>
-        push(validateSwotItem(item, `${path}.swot.${quadrant}[${i}]`)),
-      );
+      const seenItemIds = new Set<string>();
+      list.forEach((item, i) => {
+        push(validateSwotItem(item, `${path}.swot.${quadrant}[${i}]`));
+        if (isPlainObject(item) && typeof item.id === "string") {
+          if (seenItemIds.has(item.id)) {
+            errors.push(`${path}.swot.${quadrant}[${i}].id is duplicated.`);
+          }
+          seenItemIds.add(item.id);
+        }
+      });
     }
   }
 

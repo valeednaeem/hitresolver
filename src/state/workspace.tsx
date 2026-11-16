@@ -24,7 +24,14 @@ import {
 } from "react";
 import { createBlankDecision, createInitialState } from "@/domain/factory";
 import { createId } from "@/domain/ids";
-import type { AppState, Decision, StorageFailure } from "@/domain/types";
+import type {
+  AppState,
+  Comparison,
+  Decision,
+  ProsCons,
+  StorageFailure,
+  Swot,
+} from "@/domain/types";
 import { localStorageAdapter } from "@/storage/local-storage";
 import type { StorageAdapter } from "@/storage/adapter";
 
@@ -39,6 +46,9 @@ export type WorkspaceAction =
   | { type: "duplicate"; id: string }
   | { type: "remove"; id: string }
   | { type: "updateMeta"; id: string; title?: string; description?: string }
+  | { type: "updateProsCons"; id: string; prosCons: ProsCons }
+  | { type: "updateComparison"; id: string; comparison: Comparison }
+  | { type: "updateSwot"; id: string; swot: Swot }
   | { type: "setStorageProblem"; problem: StorageProblem | null };
 
 /* ------------------------------------------------------------------ */
@@ -166,6 +176,29 @@ export function workspaceReducer(
         ),
       };
 
+    case "updateProsCons":
+      return {
+        ...state,
+        dirty: true,
+        data: mapDecision(state.data, action.id, (d) => touch(d, { prosCons: action.prosCons })),
+      };
+
+    case "updateComparison":
+      return {
+        ...state,
+        dirty: true,
+        data: mapDecision(state.data, action.id, (d) =>
+          touch(d, { comparison: action.comparison }),
+        ),
+      };
+
+    case "updateSwot":
+      return {
+        ...state,
+        dirty: true,
+        data: mapDecision(state.data, action.id, (d) => touch(d, { swot: action.swot })),
+      };
+
     default:
       return state;
   }
@@ -191,6 +224,12 @@ interface WorkspaceContextValue {
   duplicate: (id: string) => void;
   remove: (id: string) => void;
   updateMeta: (id: string, patch: { title?: string; description?: string }) => void;
+  /** Replace a decision's pros/cons ledger. */
+  updateProsCons: (id: string, prosCons: ProsCons) => void;
+  /** Replace a decision's comparison matrix. */
+  updateComparison: (id: string, comparison: Comparison) => void;
+  /** Replace a decision's SWOT analysis. */
+  updateSwot: (id: string, swot: Swot) => void;
   /** Retry persistence after a storage failure. */
   retrySave: () => void;
   /** Dismiss the storage banner. */
@@ -347,6 +386,22 @@ export function WorkspaceProvider({ children, adapter }: ProviderProps) {
     [],
   );
 
+  const updateProsCons = useCallback(
+    (id: string, prosCons: ProsCons) => dispatch({ type: "updateProsCons", id, prosCons }),
+    [],
+  );
+
+  const updateComparison = useCallback(
+    (id: string, comparison: Comparison) =>
+      dispatch({ type: "updateComparison", id, comparison }),
+    [],
+  );
+
+  const updateSwot = useCallback(
+    (id: string, swot: Swot) => dispatch({ type: "updateSwot", id, swot }),
+    [],
+  );
+
   const retrySave = useCallback(() => {
     if (!pendingRef.current) return;
     const result = storage.save(pendingRef.current);
@@ -374,6 +429,9 @@ export function WorkspaceProvider({ children, adapter }: ProviderProps) {
       duplicate,
       remove,
       updateMeta,
+      updateProsCons,
+      updateComparison,
+      updateSwot,
       retrySave,
       dismissStorageProblem,
     }),
@@ -387,6 +445,9 @@ export function WorkspaceProvider({ children, adapter }: ProviderProps) {
       duplicate,
       remove,
       updateMeta,
+      updateProsCons,
+      updateComparison,
+      updateSwot,
       retrySave,
       dismissStorageProblem,
     ],
