@@ -6,6 +6,74 @@ Significant technical and product decisions, with rationale, alternatives, benef
 
 ---
 
+## D-013 — Pre-hydration bootstrap state instead of generated ids during prerender
+
+**Date:** 2026-11-16 · **Phase:** 1
+
+**Decided:** The workspace reducer's initializer uses a static `BOOTSTRAP_STATE` (fixed id, empty content). The real state — including `crypto.randomUUID()` ids — is created in the mount effect, client-side only.
+
+**Why:** Next.js 16 refuses to prerender a client component that evaluates `crypto.randomUUID()`, failing `next build`. The app renders only a loading screen until hydration, so the bootstrap state is never visible; because `dirty` starts `false` it is also never persisted.
+
+**Alternatives considered:** wrapping in `Suspense` or deferring the read — both add complexity for a value that is discarded one tick later.
+
+**Benefits:** Production build passes; no generated content in server HTML (also avoids hydration mismatch on ids/timestamps).
+**Reversible:** Yes.
+
+---
+
+## D-012 — Auto-save is gated on a user mutation (`dirty` flag)
+
+**Date:** 2026-11-16 · **Phase:** 1
+
+**Decided:** The reducer tracks `dirty`, set only by user actions (select/create/duplicate/remove/updateMeta). Persistence and the `pagehide` flush run only while `dirty` is true.
+
+**Why:** On a failed load (corrupt/unavailable) the provider falls back to an in-memory sample so the app stays usable. Without gating, the debounced save would overwrite the user's unreadable data within 300 ms — exactly the silent-overwrite failure the brief forbids (prototype defect W9). Gating means a failed load is never replaced until the user actually edits.
+
+**Benefits:** Corrupt payloads survive for manual recovery; unchanged data is not rewritten on every visit.
+**Risks:** A user who only reads data never persists anything — harmless, since there is nothing new to persist.
+**Reversible:** Yes.
+
+---
+
+## D-011 — Storage problems live in the reducer, not component state
+
+**Date:** 2026-11-16 · **Phase:** 1
+
+**Decided:** `storageProblem` is a reducer field with a `setStorageProblem` action, surfaced through context with `retrySave` / `dismissStorageProblem`.
+
+**Why:** Failures are raised from three places (hydrate, debounced save, flush-on-hide). Centralising in the reducer keeps a single source of truth and satisfies the React rule against synchronous `setState` in effects. Retry re-saves the pending payload rather than hiding the problem.
+
+**Reversible:** Yes.
+
+---
+
+## D-010 — Tailwind 4 class-based dark mode with pre-paint script
+
+**Date:** 2026-11-16 · **Phase:** 1
+
+**Decided:** Dark mode is a `.dark` class on `<html>`, toggled by a small inline script in `layout.tsx` before paint, persisted under `hitresolver:v1:theme`, defaulting to `prefers-color-scheme`. The toggle reads the class via `useSyncExternalStore` (MutationObserver) rather than copying it into React state.
+
+**Why:** Tailwind 4 dropped `darkMode: "media"` config in favour of `@custom-variant`. A class-based approach gives user control; the pre-paint script prevents a light-flash. `useSyncExternalStore` keeps the DOM as single source of truth — no `setState`-in-effect, no hydration mismatch.
+
+**Alternatives considered:** `next-themes` package — rejected; ~1 dependency for what is 20 lines, and the brief favours minimal dependencies.
+**Reversible:** Yes.
+
+---
+
+## D-009 — Validation rejects rather than clamps
+
+**Date:** 2026-11-16 · **Phase:** 1
+
+**Decided:** All validators return `{ ok: false, errors }` for out-of-range or malformed input — weights/scores outside 1–10, `NaN`, `Infinity`, empty required text — and never silently adjust the value. Shape validation (`validateAppState`) collects **all** errors at once rather than failing at the first.
+
+**Why:** Spec §0.1 and prototype defects W1/W3/W6: the prototype clamped and accepted 0, producing numbers the user could not explain. Rejection with the allowed range stated in the message is the honest behaviour. Collecting all errors makes backup-restore failures actionable in one pass.
+
+**Benefits:** Deterministic, testable, matches the audit's fix list.
+**Risks:** Slightly more verbose UI error handling — mitigated by `validateField` for inline editing.
+**Reversible:** Yes, but changing this later would alter persisted-behaviour expectations.
+
+---
+
 ## D-001 — Greenfield build; prototype is a reference, not source
 
 **Date:** 2026-11-16 · **Phase:** 0

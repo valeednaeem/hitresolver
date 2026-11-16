@@ -7,6 +7,52 @@ Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 
+### Phase 1 — Product Foundation & UI/UX (2026-11-16)
+
+**Added**
+- Next.js 16.4.6 scaffold (TypeScript, Tailwind CSS 4, App Router, `src/` directory, `@/*` import alias).
+- Design system: semantic tokens (canvas/surface/ink/brand/status) with class-based dark mode in `src/app/globals.css`, plus theme-aware scrollbars, visible focus rings and reduced-motion support.
+- Reusable UI kit under `src/components/ui/`:
+  - `Button` (5 variants, 3 sizes, loading state), `Spinner`/`LoadingState`
+  - `Card`/`CardHeader`, `Badge` (text + colour, never colour alone)
+  - `TextField`/`TextAreaField`/`SelectField` with `aria-describedby`/`aria-invalid` wiring
+  - `Modal` (focus trap, Escape/backdrop close, scroll lock, focus restore) + `ModalActions`
+  - `ToastProvider`/`useToast` with an always-present `aria-live` region
+  - `EmptyState`, `BrandMark`, `PhasePlaceholder`, dependency-free inline icon set
+- Responsive application shell (`src/components/shell/`):
+  - Sidebar: fixed drawer below `lg`, static column at `lg+`; decision list sorted by last updated with counts and relative times; create/duplicate actions; storage-failure banner with Retry/Dismiss
+  - Workspace header: inline-editable title and description (commit on blur/Enter, Escape reverts, validation errors shown inline), duplicate, delete-with-confirmation
+  - Framework tabs: full ARIA tabs pattern (roving tabindex, Arrow/Home/End) covering all four frameworks
+  - Theme toggle via `useSyncExternalStore` + pre-paint script in `layout.tsx` (no flash, no setState-in-effect)
+  - Skip-to-content link, sticky top bar, honest demo/storage footer
+- Domain layer (`src/domain/`):
+  - `types.ts` — single source of truth for `Decision`, `AppState`, ranges, `SCHEMA_VERSION`, storage key namespace
+  - `validation.ts` — pure, total validators; **rejects rather than clamps** (spec §0.1); full `AppState` shape validation collecting all errors at once
+  - `ids.ts` — `crypto.randomUUID()` with a collision-resistant fallback
+  - `factory.ts` — blank decision (2 options, 2 criteria) and the reference sample decision, content preserved verbatim
+- Storage layer (`src/storage/`):
+  - `StorageAdapter` interface with typed `StorageResult` and `STORAGE_MESSAGES`
+  - `LocalStorageAdapter`: every access wrapped; corrupt payloads reported (never silently replaced); quota vs unavailable distinguished by error name; dangling `activeDecisionId` repaired before validation
+- Workspace state (`src/state/workspace.tsx`): single reducer for all mutations, debounced (300 ms) persistence, flush on `pagehide`/`visibilitychange`, and **dirty-gating** so a failed load is never overwritten by the in-memory fallback.
+- Vitest setup: node environment by default (keeps engine/domain DOM-free), jsdom opted into per file via `@vitest-environment` docblock; coverage via `@vitest/coverage-v8`.
+- **61 tests** across `validation.test.ts`, `factory.test.ts`, `local-storage.test.ts`.
+- npm scripts: `test`, `test:watch`, `typecheck`, `check`.
+
+**Changed**
+- `@types/node` raised `^20` → `^24` to satisfy Vitest 5's peer range.
+- `allowScripts: {}` added to `package.json` (required by the environment's npm `allow-scripts` policy).
+
+**Fixed (found during Phase 1 build)**
+- Storage load validated before repairing, making the dangling-`activeDecisionId` repair unreachable (defect W12 path).
+- Quota detection required `instanceof DOMException`; now matches the error name so shimmed environments still report `quota` correctly.
+- Reducer initializer called `crypto.randomUUID()` during prerender, failing `next build`; replaced with a static bootstrap state that is never rendered or persisted.
+
+**Known issues**
+- Framework panels are honest placeholders until Phase 2 — no controls are shown that do not work.
+- No JSON export/import yet (Phase 3); the sidebar footer states this plainly.
+
+---
+
 ### Phase 0 — Discovery & Project Audit (2026-11-16)
 
 **Added**

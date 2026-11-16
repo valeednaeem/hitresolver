@@ -1,0 +1,187 @@
+@import "tailwindcss";
+
+/* Class-based dark mode (toggled on <html>) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ------------------------------------------------------------------
+   HitResolver Design Tokens
+   Semantic tokens live in :root / .dark. Tailwind utilities are
+   generated from them via @theme inline, so `bg-surface`, `text-ink`
+   etc. automatically follow the active theme.
+------------------------------------------------------------------ */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --canvas: #f4f6fa;
+  --surface: #ffffff;
+  --surface-2: #eef1f6;
+  --surface-3: #e4e9f1;
+
+  /* Lines */
+  --line: #e2e7ef;
+  --line-strong: #cbd4e1;
+
+  /* Text */
+  --ink: #0f172a;
+  --ink-muted: #56637a;
+  --ink-subtle: #8593a8;
+
+  /* Brand */
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-soft: rgba(79, 70, 229, 0.1);
+  --on-primary: #ffffff;
+
+  /* Semantic */
+  --success: #059669;
+  --success-soft: rgba(5, 150, 105, 0.12);
+  --danger: #dc2626;
+  --danger-soft: rgba(220, 38, 38, 0.1);
+  --warning: #d97706;
+  --warning-soft: rgba(217, 119, 6, 0.14);
+  --info: #2563eb;
+  --info-soft: rgba(37, 99, 235, 0.1);
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.14);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --canvas: #0b1120;
+  --surface: #131c31;
+  --surface-2: #1b2537;
+  --surface-3: #243049;
+
+  --line: #27344a;
+  --line-strong: #3a4a66;
+
+  --ink: #f1f5f9;
+  --ink-muted: #9aa8bd;
+  --ink-subtle: #74839b;
+
+  --primary: #6366f1;
+  --primary-hover: #818cf8;
+  --primary-soft: rgba(99, 102, 241, 0.18);
+  --on-primary: #ffffff;
+
+  --success: #10b981;
+  --success-soft: rgba(16, 185, 129, 0.16);
+  --danger: #ef4444;
+  --danger-soft: rgba(239, 68, 68, 0.16);
+  --warning: #f59e0b;
+  --warning-soft: rgba(245, 158, 11, 0.16);
+  --info: #3b82f6;
+  --info-soft: rgba(59, 130, 246, 0.16);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-on-primary: var(--on-primary);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+
+  --font-sans:
+    var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* ------------------------------------------------------------------
+   Base
+------------------------------------------------------------------ */
+
+html {
+  height: 100%;
+}
+
+body {
+  min-height: 100%;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Consistent, visible keyboard focus everywhere. */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Remove the default focus ring for pointer users only. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Refined scrollbars that follow the theme. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-subtle);
+  background-clip: content-box;
+}
+
+/* Respect the user's motion preference. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
