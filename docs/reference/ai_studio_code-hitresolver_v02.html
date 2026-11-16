@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The HitResolver — Decision Intelligence App</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-2: #273449;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --green: #10b981;
+      --green-soft: rgba(16, 185, 129, 0.14);
+      --red: #ef4444;
+      --red-soft: rgba(239, 68, 68, 0.14);
+      --amber: #f59e0b;
+      --amber-soft: rgba(245, 158, 11, 0.14);
+      --blue: #3b82f6;
+      --blue-soft: rgba(59, 130, 246, 0.14);
+      --radius: 12px;
+      --shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* Layout */
+    .app-shell {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: #0b1120;
+      border-right: 1px solid var(--border);
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), #ec4899);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 16px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .brand h1 {
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand span {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 9px 14px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      color: var(--text);
+      background: var(--surface-2);
+    }
+
+    .btn:hover { filter: brightness(1.1); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-outline { background: transparent; border-color: var(--border); color: var(--muted); }
+    .btn-outline:hover { color: var(--text); border-color: var(--muted); }
+    .btn-danger { background: var(--red-soft); color: #fca5a5; border-color: rgba(239, 68, 68, 0.3); }
+    .btn-sm { padding: 5px 10px; font-size: 0.78rem; }
+
+    .decision-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .decision-item {
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      transition: 0.15s ease;
+    }
+
+    .decision-item:hover {
+      background: var(--surface);
+    }
+
+    .decision-item.active {
+      background: var(--surface);
+      border-color: var(--primary);
+    }
+
+    .decision-item-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .decision-item-meta {
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .sidebar-footer {
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Main workspace */
+    .main {
+      padding: 26px 32px;
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .header-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .title-input {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text);
+      font-size: 1.45rem;
+      font-weight: 700;
+      width: 100%;
+      max-width: 650px;
+      padding: 4px 8px;
+      margin-left: -8px;
+      border-radius: 6px;
+    }
+
+    .title-input:hover, .title-input:focus {
+      outline: none;
+      border-color: var(--border);
+      background: rgba(15, 23, 42, 0.45);
+    }
+
+    .desc-input {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--muted);
+      font-size: 0.92rem;
+      width: 100%;
+      padding: 4px 8px;
+      margin-left: -8px;
+      margin-top: 4px;
+      border-radius: 6px;
+    }
+
+    .desc-input:hover, .desc-input:focus {
+      outline: none;
+      border-color: var(--border);
+      background: rgba(15, 23, 42, 0.45);
+      color: var(--text);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+
+    .tab-btn {
+      padding: 9px 16px;
+      border-radius: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    /* Pros & Cons */
+    .meter-card {
+      margin-bottom: 20px;
+    }
+
+    .meter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .verdict-pill {
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .progress-track {
+      height: 14px;
+      background: var(--red-soft);
+      border-radius: 999px;
+      overflow: hidden;
+      display: flex;
+      border: 1px solid var(--border);
+    }
+
+    .progress-pros {
+      background: linear-gradient(90deg, #059669, var(--green));
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+
+    .pros-cons-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .col-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .add-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      width: 100%;
+    }
+
+    .input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .select-weight {
+      width: 96px;
+      flex-shrink: 0;
+    }
+
+    .item-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+    }
+
+    .list-item-text {
+      font-size: 0.9rem;
+      flex: 1;
+      word-break: break-word;
+    }
+
+    .weight-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--surface-2);
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .icon-btn:hover { color: var(--red); background: var(--red-soft); }
+
+    /* Table Delete Button */
+    .table-del-btn {
+      background: var(--red-soft);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .table-del-btn:hover {
+      background: var(--red);
+      color: #fff;
+      border-color: var(--red);
+    }
+
+    /* Comparison Table */
+    .table-controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+      align-items: center;
+    }
+
+    .ranking-banner {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .rank-card {
+      flex: 1;
+      min-width: 180px;
+      padding: 14px;
+      border-radius: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+    }
+
+    .rank-card.winner {
+      border-color: var(--green);
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.12), var(--bg));
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th:last-child, td:last-child { border-right: none; }
+    tr:last-child td { border-bottom: none; }
+
+    th {
+      background: #131c31;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .score-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .score-input {
+      width: 72px;
+      padding: 5px 8px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .note-input {
+      font-size: 0.78rem;
+      padding: 5px 8px;
+      color: var(--muted);
+    }
+
+    /* SWOT Grid */
+    .swot-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .swot-box {
+      border-radius: var(--radius);
+      padding: 18px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .swot-s { border-top: 4px solid var(--green); }
+    .swot-w { border-top: 4px solid var(--red); }
+    .swot-o { border-top: 4px solid var(--blue); }
+    .swot-t { border-top: 4px solid var(--amber); }
+
+    .swot-tag {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+
+    .impact-pill {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    .impact-high { background: var(--red-soft); color: #fca5a5; }
+    .impact-med { background: var(--amber-soft); color: #fcd34d; }
+    .impact-low { background: var(--blue-soft); color: #93c5fd; }
+
+    /* Summary View */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--primary);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: 0.2s ease;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 900px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+      .pros-cons-grid, .swot-grid { grid-template-columns: 1fr; }
+      .main { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">HR</div>
+        <div>
+          <h1>The HitResolver</h1>
+          <span>Decision Intelligence</span>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="newDecisionBtn">+ New Decision</button>
+
+      <div style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em;">
+        Saved Decisions
+      </div>
+      <div class="decision-list" id="decisionList"></div>
+
+      <div class="sidebar-footer">
+        <button class="btn btn-outline btn-sm" id="loadSampleBtn">Load Example Preset</button>
+        <button class="btn btn-outline btn-sm" id="exportJsonBtn">Backup JSON</button>
+        <label class="btn btn-outline btn-sm" style="cursor:pointer;">
+          Restore JSON
+          <input type="file" id="importJsonInput" accept=".json" hidden />
+        </label>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <section class="header-card">
+        <div class="header-top">
+          <div style="flex:1;">
+            <input type="text" id="decisionTitle" class="title-input" placeholder="Decision Title..." />
+            <input type="text" id="decisionDesc" class="desc-input" placeholder="Add context, deadline, or goal for this decision..." />
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm" id="exportMdBtn">Export Markdown</button>
+            <button class="btn btn-danger btn-sm" id="deleteDecisionBtn">Delete</button>
+          </div>
+        </div>
+      </section>
+
+      <nav class="tabs" id="tabs">
+        <button class="tab-btn active" data-tab="proscons">1. Pros &amp; Cons</button>
+        <button class="tab-btn" data-tab="comparison">2. Comparison Table</button>
+        <button class="tab-btn" data-tab="swot">3. SWOT Analysis</button>
+        <button class="tab-btn" data-tab="verdict">4. HitResolver Verdict</button>
+      </nav>
+
+      <!-- TAB 1: PROS & CONS -->
+      <section class="panel active" id="panel-proscons">
+        <div class="card meter-card">
+          <div class="meter-header">
+            <div>
+              <strong style="font-size:1rem;">Weighted Balance Meter</strong>
+              <div style="font-size:0.84rem; color:var(--muted);" id="pcStatsText">0 Pros (0 pts) vs 0 Cons (0 pts)</div>
+            </div>
+            <span class="verdict-pill" id="pcVerdictPill">Neutral</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-pros" id="pcProgressBar" style="width: 50%;"></div>
+          </div>
+        </div>
+
+        <div class="pros-cons-grid">
+          <div class="card">
+            <div class="col-header">
+              <h3 style="color:var(--green);">Pros (Upsides)</h3>
+              <span id="prosTotalBadge" class="weight-badge">0 pts</span>
+            </div>
+            <div class="add-row">
+              <input type="text" id="proInput" class="input" placeholder="Add a pro..." />
+              <select id="proWeight" class="input select-weight" title="Weight (1-10)">
+                <option value="3">Wt: 3</option>
+                <option value="5" selected>Wt: 5</option>
+                <option value="8">Wt: 8</option>
+                <option value="10">Wt: 10</option>
+              </select>
+              <button class="btn btn-primary" id="addProBtn">Add</button>
+            </div>
+            <div class="item-list" id="prosList"></div>
+          </div>
+
+          <div class="card">
+            <div class="col-header">
+              <h3 style="color:var(--red);">Cons (Downsides)</h3>
+              <span id="consTotalBadge" class="weight-badge">0 pts</span>
+            </div>
+            <div class="add-row">
+              <input type="text" id="conInput" class="input" placeholder="Add a con..." />
+              <select id="conWeight" class="input select-weight" title="Weight (1-10)">
+                <option value="3">Wt: 3</option>
+                <option value="5" selected>Wt: 5</option>
+                <option value="8">Wt: 8</option>
+                <option value="10">Wt: 10</option>
+              </select>
+              <button class="btn btn-primary" id="addConBtn">Add</button>
+            </div>
+            <div class="item-list" id="consList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: COMPARISON TABLE -->
+      <section class="panel" id="panel-comparison">
+        <div class="card">
+          <div class="table-controls">
+            <div style="display:flex; gap:8px; flex:1; min-width:240px;">
+              <input type="text" id="newOptionInput" class="input" placeholder="New option name (e.g., Vendor C)..." />
+              <button class="btn btn-primary" id="addOptionBtn">+ Option</button>
+            </div>
+            <div style="display:flex; gap:8px; flex:1.3; min-width:280px;">
+              <input type="text" id="newCriterionInput" class="input" placeholder="New criterion (e.g., Cost, Speed)..." />
+              <select id="newCriterionWeight" class="input select-weight">
+                <option value="3">Wt: 3</option>
+                <option value="5" selected>Wt: 5</option>
+                <option value="8">Wt: 8</option>
+                <option value="10">Wt: 10</option>
+              </select>
+              <button class="btn btn-primary" id="addCriterionBtn">+ Criterion</button>
+            </div>
+          </div>
+
+          <div class="ranking-banner" id="rankingBanner"></div>
+
+          <div class="table-wrap">
+            <table id="comparisonTable"></table>
+          </div>
+          <p style="font-size:0.78rem; color:var(--muted); margin-top:10px;">
+            Score each option from <strong>1 to 10</strong> per criterion. Total Score = &Sigma;(Criterion Weight &times; Option Score).
+          </p>
+        </div>
+      </section>
+
+      <!-- TAB 3: SWOT ANALYSIS -->
+      <section class="panel" id="panel-swot">
+        <div class="swot-grid">
+          <div class="swot-box swot-s">
+            <div class="col-header">
+              <div>
+                <div class="swot-tag">Internal &bull; Helpful</div>
+                <h3 style="color:var(--green);">Strengths</h3>
+              </div>
+            </div>
+            <div class="add-row">
+              <input type="text" class="input swot-input" data-quad="strengths" placeholder="Add a strength..." />
+              <select class="input select-weight swot-impact" data-quad="strengths">
+                <option value="High">High</option>
+                <option value="Medium" selected>Med</option>
+                <option value="Low">Low</option>
+              </select>
+              <button class="btn btn-primary swot-add" data-quad="strengths">Add</button>
+            </div>
+            <div class="item-list" id="swot-strengths"></div>
+          </div>
+
+          <div class="swot-box swot-w">
+            <div class="col-header">
+              <div>
+                <div class="swot-tag">Internal &bull; Harmful</div>
+                <h3 style="color:var(--red);">Weaknesses</h3>
+              </div>
+            </div>
+            <div class="add-row">
+              <input type="text" class="input swot-input" data-quad="weaknesses" placeholder="Add a weakness..." />
+              <select class="input select-weight swot-impact" data-quad="weaknesses">
+                <option value="High">High</option>
+                <option value="Medium" selected>Med</option>
+                <option value="Low">Low</option>
+              </select>
+              <button class="btn btn-primary swot-add" data-quad="weaknesses">Add</button>
+            </div>
+            <div class="item-list" id="swot-weaknesses"></div>
+          </div>
+
+          <div class="swot-box swot-o">
+            <div class="col-header">
+              <div>
+                <div class="swot-tag">External &bull; Helpful</div>
+                <h3 style="color:var(--blue);">Opportunities</h3>
+              </div>
+            </div>
+            <div class="add-row">
+              <input type="text" class="input swot-input" data-quad="opportunities" placeholder="Add an opportunity..." />
+              <select class="input select-weight swot-impact" data-quad="opportunities">
+                <option value="High">High</option>
+                <option value="Medium" selected>Med</option>
+                <option value="Low">Low</option>
+              </select>
+              <button class="btn btn-primary swot-add" data-quad="opportunities">Add</button>
+            </div>
+            <div class="item-list" id="swot-opportunities"></div>
+          </div>
+
+          <div class="swot-box swot-t">
+            <div class="col-header">
+              <div>
+                <div class="swot-tag">External &bull; Harmful</div>
+                <h3 style="color:var(--amber);">Threats</h3>
+              </div>
+            </div>
+            <div class="add-row">
+              <input type="text" class="input swot-input" data-quad="threats" placeholder="Add a threat..." />
+              <select class="input select-weight swot-impact" data-quad="threats">
+                <option value="High">High</option>
+                <option value="Medium" selected>Med</option>
+                <option value="Low">Low</option>
+              </select>
+              <button class="btn btn-primary swot-add" data-quad="threats">Add</button>
+            </div>
+            <div class="item-list" id="swot-threats"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: VERDICT -->
+      <section class="panel" id="panel-verdict">
+        <div class="summary-grid" id="verdictCards"></div>
+        <div class="card">
+          <h3 style="margin-bottom:10px;">Strategic Synthesis &amp; Next Actions</h3>
+          <div id="strategicGuidance" style="color:var(--muted); font-size:0.92rem; display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast">Saved</div>
+
+  <script>
+    const STORAGE_KEY = "hitresolver_v1_state";
+
+    const uid = () => Math.random().toString(36).slice(2, 10);
+
+    const escapeHtml = (str) => {
+      const div = document.createElement("div");
+      div.textContent = str ?? "";
+      return div.innerHTML;
+    };
+
+    function createSampleDecision() {
+      const opt1 = uid(), opt2 = uid(), opt3 = uid();
+      return {
+        id: uid(),
+        title: "Choosing Our Next Product Stack",
+        description: "Deciding between a monolith, serverless architecture, or modular microservices for Q3 launch.",
+        updatedAt: new Date().toISOString(),
+        prosCons: {
+          pros: [
+            { id: uid(), text: "Faster time-to-market with unified deployment", weight: 9 },
+            { id: uid(), text: "Lower initial cloud infrastructure overhead", weight: 7 },
+            { id: uid(), text: "Team already knows the primary language", weight: 8 }
+          ],
+          cons: [
+            { id: uid(), text: "Potential scaling bottleneck if traffic spikes 10x", weight: 6 },
+            { id: uid(), text: "Requires strict module boundaries to avoid tech debt", weight: 5 }
+          ]
+        },
+        comparison: {
+          options: [
+            { id: opt1, name: "Modular Monolith" },
+            { id: opt2, name: "Serverless" },
+            { id: opt3, name: "Microservices" }
+          ],
+          criteria: [
+            {
+              id: uid(),
+              name: "Development Speed",
+              weight: 9,
+              scores: { [opt1]: 9, [opt2]: 7, [opt3]: 4 },
+              notes: { [opt1]: "Single repo & deploy", [opt2]: "Fast APIs", [opt3]: "High setup cost" }
+            },
+            {
+              id: uid(),
+              name: "Cost Efficiency",
+              weight: 7,
+              scores: { [opt1]: 8, [opt2]: 8, [opt3]: 4 },
+              notes: { [opt1]: "Predictable", [opt2]: "Pay-per-use", [opt3]: "Cluster overhead" }
+            },
+            {
+              id: uid(),
+              name: "Long-Term Scalability",
+              weight: 8,
+              scores: { [opt1]: 7, [opt2]: 9, [opt3]: 10 },
+              notes: { [opt1]: "Can split later", [opt2]: "Auto-scales", [opt3]: "Independent scaling" }
+            }
+          ]
+        },
+        swot: {
+          strengths: [
+            { id: uid(), text: "Experienced full-stack engineering team", impact: "High" },
+            { id: uid(), text: "Clear MVP scope and customer commitments", impact: "Medium" }
+          ],
+          weaknesses: [
+            { id: uid(), text: "Limited dedicated DevOps capacity", impact: "High" }
+          ],
+          opportunities: [
+            { id: uid(), text: "Capture early enterprise contracts before competitors ship", impact: "High" }
+          ],
+          threats: [
+            { id: uid(), text: "Cloud vendor lock-in or pricing changes", impact: "Medium" }
+          ]
+        }
+      };
+    }
+
+    function createBlankDecision() {
+      const opt1 = uid(), opt2 = uid();
+      return {
+        id: uid(),
+        title: "Untitled Decision",
+        description: "",
+        updatedAt: new Date().toISOString(),
+        prosCons: { pros: [], cons: [] },
+        comparison: {
+          options: [
+            { id: opt1, name: "Option A" },
+            { id: opt2, name: "Option B" }
+          ],
+          criteria: [
+            { id: uid(), name: "Cost", weight: 5, scores: { [opt1]: 5, [opt2]: 5 }, notes: {} },
+            { id: uid(), name: "Impact", weight: 8, scores: { [opt1]: 5, [opt2]: 5 }, notes: {} }
+          ]
+        },
+        swot: { strengths: [], weaknesses: [], opportunities: [], threats: [] }
+      };
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.decisions) && parsed.decisions.length > 0) {
+            return parsed;
+          }
+        }
+      } catch (e) {}
+      const sample = createSampleDecision();
+      return { activeDecisionId: sample.id, decisions: [sample] };
+    }
+
+    let state = loadState();
+
+    function saveState() {
+      const d = getActiveDecision();
+      if (d) d.updatedAt = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function getActiveDecision() {
+      return state.decisions.find(d => d.id === state.activeDecisionId) || state.decisions[0];
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => el.classList.remove("show"), 1800);
+    }
+
+    /* ---------- RENDERING ---------- */
+    function renderSidebar() {
+      const list = document.getElementById("decisionList");
+      list.innerHTML = "";
+      state.decisions.forEach(dec => {
+        const div = document.createElement("div");
+        div.className = "decision-item" + (dec.id === state.activeDecisionId ? " active" : "");
+        const count = dec.prosCons.pros.length + dec.prosCons.cons.length +
+          dec.swot.strengths.length + dec.swot.weaknesses.length +
+          dec.swot.opportunities.length + dec.swot.threats.length;
+
+        div.innerHTML = `
+          <div style="min-width:0;">
+            <div class="decision-item-title">${escapeHtml(dec.title || "Untitled Decision")}</div>
+            <div class="decision-item-meta">${dec.comparison.options.length} options &bull; ${count} items</div>
+          </div>
+        `;
+        div.addEventListener("click", () => {
+          state.activeDecisionId = dec.id;
+          saveState();
+          renderAll();
+        });
+        list.appendChild(div);
+      });
+    }
+
+    function renderHeader() {
+      const dec = getActiveDecision();
+      document.getElementById("decisionTitle").value = dec.title;
+      document.getElementById("decisionDesc").value = dec.description;
+    }
+
+    function getProsConsStats(dec) {
+      const prosPts = dec.prosCons.pros.reduce((s, i) => s + Number(i.weight), 0);
+      const consPts = dec.prosCons.cons.reduce((s, i) => s + Number(i.weight), 0);
+      const total = prosPts + consPts;
+      const pct = total === 0 ? 50 : Math.round((prosPts / total) * 100);
+      let label = "Balanced / Toss-up";
+      let color = "var(--amber-soft)";
+      let textColor = "#fcd34d";
+      if (total > 0) {
+        if (pct >= 65) { label = "Strong Go"; color = "var(--green-soft)"; textColor = "#6ee7b7"; }
+        else if (pct >= 55) { label = "Lean Yes"; color = "var(--green-soft)"; textColor = "#6ee7b7"; }
+        else if (pct <= 35) { label = "Strong No"; color = "var(--red-soft)"; textColor = "#fca5a5"; }
+        else if (pct <= 45) { label = "Lean No"; color = "var(--red-soft)"; textColor = "#fca5a5"; }
+      }
+      return { prosPts, consPts, total, pct, label, color, textColor };
+    }
+
+    function renderProsCons() {
+      const dec = getActiveDecision();
+      const stats = getProsConsStats(dec);
+
+      document.getElementById("pcStatsText").textContent =
+        `${dec.prosCons.pros.length} Pros (${stats.prosPts} pts) vs ${dec.prosCons.cons.length} Cons (${stats.consPts} pts)`;
+      document.getElementById("pcProgressBar").style.width = `${stats.pct}%`;
+
+      const pill = document.getElementById("pcVerdictPill");
+      pill.textContent = `${stats.label} (${stats.pct}%)`;
+      pill.style.background = stats.color;
+      pill.style.color = stats.textColor;
+
+      document.getElementById("prosTotalBadge").textContent = `${stats.prosPts} pts`;
+      document.getElementById("consTotalBadge").textContent = `${stats.consPts} pts`;
+
+      const renderCol = (elId, items, type) => {
+        const container = document.getElementById(elId);
+        container.innerHTML = "";
+        if (items.length === 0) {
+          container.innerHTML = `<div style="color:var(--muted); font-size:0.85rem; padding:10px 0;">No items added yet.</div>`;
+          return;
+        }
+        items.forEach(item => {
+          const row = document.createElement("div");
+          row.className = "list-item";
+          row.innerHTML = `
+            <span class="list-item-text">${escapeHtml(item.text)}</span>
+            <span class="weight-badge">Wt: ${item.weight}</span>
+            <button class="icon-btn" title="Remove">&times;</button>
+          `;
+          row.querySelector("button").addEventListener("click", () => {
+            dec.prosCons[type] = dec.prosCons[type].filter(x => x.id !== item.id);
+            saveState();
+            renderProsCons();
+            renderSidebar();
+            renderVerdict();
+          });
+          container.appendChild(row);
+        });
+      };
+
+      renderCol("prosList", dec.prosCons.pros, "pros");
+      renderCol("consList", dec.prosCons.cons, "cons");
+    }
+
+    function getComparisonRankings(dec) {
+      const maxPossible = dec.comparison.criteria.reduce((s, c) => s + Number(c.weight) * 10, 0);
+      const ranked = dec.comparison.options.map(opt => {
+        const score = dec.comparison.criteria.reduce((sum, crit) => {
+          const val = Number(crit.scores[opt.id] ?? 0);
+          return sum + val * Number(crit.weight);
+        }, 0);
+        const pct = maxPossible > 0 ? Math.round((score / maxPossible) * 100) : 0;
+        return { ...opt, score, pct };
+      }).sort((a, b) => b.score - a.score);
+      return { ranked, maxPossible };
+    }
+
+    function updateComparisonSummary() {
+      const dec = getActiveDecision();
+      const { ranked, maxPossible } = getComparisonRankings(dec);
+      const banner = document.getElementById("rankingBanner");
+      banner.innerHTML = "";
+      ranked.forEach((opt, idx) => {
+        const card = document.createElement("div");
+        card.className = "rank-card" + (idx === 0 && ranked.length > 0 ? " winner" : "");
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:0.75rem; font-weight:700; color:${idx === 0 ? 'var(--green)' : 'var(--muted)'};">
+              #${idx + 1} ${idx === 0 ? "LEADING CHOICE" : "RANK"}
+            </span>
+            <span style="font-size:0.8rem; font-weight:700;">${opt.pct}%</span>
+          </div>
+          <div style="font-weight:700; font-size:1rem;">${escapeHtml(opt.name)}</div>
+          <div style="font-size:0.82rem; color:var(--muted);">${opt.score} / ${maxPossible} weighted pts</div>
+        `;
+        banner.appendChild(card);
+      });
+
+      dec.comparison.options.forEach(opt => {
+        const cell = document.getElementById(`opt-total-${opt.id}`);
+        const found = ranked.find(r => r.id === opt.id);
+        if (cell && found) cell.textContent = `${found.score} pts (${found.pct}%)`;
+      });
+    }
+
+    function renderComparisonTable() {
+      const dec = getActiveDecision();
+      updateComparisonSummary();
+
+      const table = document.getElementById("comparisonTable");
+      const { options, criteria } = dec.comparison;
+
+      if (options.length === 0) {
+        table.innerHTML = `<tr><td style="padding:20px; color:var(--muted);">No options yet. Add an option above to start comparing.</td></tr>`;
+        return;
+      }
+
+      let html = `<thead><tr><th style="min-width:220px;">Criteria (Weight)</th>`;
+      options.forEach(opt => {
+        html += `
+          <th style="min-width:185px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+              <span>${escapeHtml(opt.name)}</span>
+              <button type="button" class="table-del-btn del-opt-btn" data-opt="${opt.id}" title="Delete option">Delete</button>
+            </div>
+          </th>
+        `;
+      });
+      html += `</tr></thead><tbody>`;
+
+      if (criteria.length === 0) {
+        html += `<tr><td colspan="${options.length + 1}" style="color:var(--muted);">No criteria yet. Add a criterion above to score your options.</td></tr>`;
+      } else {
+        criteria.forEach(crit => {
+          html += `<tr>
+            <td>
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                <div>
+                  <div style="font-weight:600;">${escapeHtml(crit.name)}</div>
+                  <div style="font-size:0.75rem; color:var(--muted);">Weight: ${crit.weight}/10</div>
+                </div>
+                <button type="button" class="table-del-btn del-crit-btn" data-crit="${crit.id}" title="Delete criterion">Delete</button>
+              </div>
+            </td>`;
+
+          options.forEach(opt => {
+            const score = crit.scores[opt.id] ?? 5;
+            const note = crit.notes?.[opt.id] ?? "";
+            html += `
+              <td>
+                <div class="score-cell">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <input type="number" min="1" max="10" class="input score-input"
+                      data-crit="${crit.id}" data-opt="${opt.id}" value="${score}" />
+                    <span style="font-size:0.75rem; color:var(--muted);">/ 10</span>
+                  </div>
+                  <input type="text" class="input note-input" placeholder="Note..."
+                    data-crit="${crit.id}" data-opt="${opt.id}" value="${escapeHtml(note)}" />
+                </div>
+              </td>
+            `;
+          });
+          html += `</tr>`;
+        });
+      }
+
+      html += `</tbody><tfoot><tr style="background:#131c31; font-weight:700;"><td>Total Weighted Score</td>`;
+      options.forEach(opt => {
+        html += `<td id="opt-total-${opt.id}">0 pts</td>`;
+      });
+      html += `</tr></tfoot>`;
+
+      table.innerHTML = html;
+      updateComparisonSummary();
+
+      table.querySelectorAll(".score-input").forEach(inp => {
+        inp.addEventListener("input", (e) => {
+          let val = parseInt(e.target.value, 10);
+          if (isNaN(val)) val = 0;
+          if (val > 10) { val = 10; e.target.value = 10; }
+          if (val < 0) { val = 0; e.target.value = 0; }
+          const crit = dec.comparison.criteria.find(c => c.id === e.target.dataset.crit);
+          if (crit) {
+            crit.scores[e.target.dataset.opt] = val;
+            saveState();
+            updateComparisonSummary();
+            renderVerdict();
+          }
+        });
+      });
+
+      table.querySelectorAll(".note-input").forEach(inp => {
+        inp.addEventListener("input", (e) => {
+          const crit = dec.comparison.criteria.find(c => c.id === e.target.dataset.crit);
+          if (crit) {
+            if (!crit.notes) crit.notes = {};
+            crit.notes[e.target.dataset.opt] = e.target.value;
+            saveState();
+          }
+        });
+      });
+    }
+
+    function renderSwot() {
+      const dec = getActiveDecision();
+      const quads = ["strengths", "weaknesses", "opportunities", "threats"];
+      quads.forEach(q => {
+        const container = document.getElementById(`swot-${q}`);
+        container.innerHTML = "";
+        const items = dec.swot[q];
+        if (items.length === 0) {
+          container.innerHTML = `<div style="color:var(--muted); font-size:0.84rem; padding:6px 0;">No items added yet.</div>`;
+          return;
+        }
+        items.forEach(item => {
+          const impClass = item.impact === "High" ? "impact-high" : item.impact === "Medium" ? "impact-med" : "impact-low";
+          const row = document.createElement("div");
+          row.className = "list-item";
+          row.innerHTML = `
+            <span class="list-item-text">${escapeHtml(item.text)}</span>
+            <span class="impact-pill ${impClass}">${item.impact}</span>
+            <button class="icon-btn" title="Remove">&times;</button>
+          `;
+          row.querySelector("button").addEventListener("click", () => {
+            dec.swot[q] = dec.swot[q].filter(x => x.id !== item.id);
+            saveState();
+            renderSwot();
+            renderSidebar();
+            renderVerdict();
+          });
+          container.appendChild(row);
+        });
+      });
+    }
+
+    function renderVerdict() {
+      const dec = getActiveDecision();
+      const pc = getProsConsStats(dec);
+      const { ranked } = getComparisonRankings(dec);
+      const topOpt = ranked[0];
+      const runnerUp = ranked[1];
+
+      const sCount = dec.swot.strengths.length;
+      const wCount = dec.swot.weaknesses.length;
+      const oCount = dec.swot.opportunities.length;
+      const tCount = dec.swot.threats.length;
+
+      const highRisks = [
+        ...dec.swot.weaknesses.filter(x => x.impact === "High"),
+        ...dec.swot.threats.filter(x => x.impact === "High")
+      ];
+
+      document.getElementById("verdictCards").innerHTML = `
+        <div class="card">
+          <div style="font-size:0.78rem; color:var(--muted); text-transform:uppercase;">Pros &amp; Cons Signal</div>
+          <div style="font-size:1.35rem; font-weight:800; margin:6px 0; color:${pc.textColor};">${pc.label}</div>
+          <div style="font-size:0.86rem; color:var(--muted);">
+            ${pc.prosPts} Pro points vs ${pc.consPts} Con points (${pc.pct}% positive weight).
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="font-size:0.78rem; color:var(--muted); text-transform:uppercase;">Comparison Winner</div>
+          <div style="font-size:1.35rem; font-weight:800; margin:6px 0; color:var(--green);">
+            ${topOpt ? escapeHtml(topOpt.name) : "No Options"}
+          </div>
+          <div style="font-size:0.86rem; color:var(--muted);">
+            ${topOpt ? `Scored ${topOpt.pct}% (${topOpt.score} weighted pts)` : "Add options to compare"}
+            ${runnerUp ? ` — ahead of ${escapeHtml(runnerUp.name)} (${runnerUp.pct}%).` : "."}
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="font-size:0.78rem; color:var(--muted); text-transform:uppercase;">SWOT Posture</div>
+          <div style="font-size:1.35rem; font-weight:800; margin:6px 0; color:var(--blue);">
+            ${sCount + oCount} Helpful vs ${wCount + tCount} Harmful
+          </div>
+          <div style="font-size:0.86rem; color:var(--muted);">
+            ${highRisks.length} High-impact weakness/threat item(s) flagged for mitigation.
+          </div>
+        </div>
+      `;
+
+      const guidance = document.getElementById("strategicGuidance");
+      const lines = [];
+      if (topOpt && runnerUp && topOpt.score - runnerUp.score <= 5) {
+        lines.push(`• <strong>Close Race:</strong> ${escapeHtml(topOpt.name)} and ${escapeHtml(runnerUp.name)} are separated by only ${topOpt.score - runnerUp.score} points. Double-check your highest-weighted criteria.`);
+      } else if (topOpt) {
+        lines.push(`• <strong>Clear Matrix Leader:</strong> <em>${escapeHtml(topOpt.name)}</em> leads your multi-criteria matrix at ${topOpt.pct}%.`);
+      }
+
+      if (highRisks.length > 0) {
+        lines.push(`• <strong>Mitigate Before Committing:</strong> Address high-impact risk — <em>"${escapeHtml(highRisks[0].text)}"</em>.`);
+      }
+
+      if (dec.swot.strengths.length > 0 && dec.swot.opportunities.length > 0) {
+        lines.push(`• <strong>SO Growth Move:</strong> Leverage <em>"${escapeHtml(dec.swot.strengths[0].text)}"</em> to capture <em>"${escapeHtml(dec.swot.opportunities[0].text)}"</em>.`);
+      }
+
+      if (lines.length === 0) {
+        lines.push("• Populate Pros & Cons, Comparison Table, and SWOT items to generate tailored strategic synthesis.");
+      }
+
+      guidance.innerHTML = lines.map(l => `<div>${l}</div>`).join("");
+    }
+
+    function renderAll() {
+      renderSidebar();
+      renderHeader();
+      renderProsCons();
+      renderComparisonTable();
+      renderSwot();
+      renderVerdict();
+    }
+
+    /* ---------- EVENTS ---------- */
+    // Delegated Delete for Comparison Table Options & Criteria
+    document.getElementById("comparisonTable").addEventListener("click", (e) => {
+      const optBtn = e.target.closest(".del-opt-btn");
+      if (optBtn) {
+        const dec = getActiveDecision();
+        const optId = optBtn.dataset.opt;
+        dec.comparison.options = dec.comparison.options.filter(o => o.id !== optId);
+        dec.comparison.criteria.forEach(c => {
+          delete c.scores[optId];
+          if (c.notes) delete c.notes[optId];
+        });
+        saveState();
+        renderComparisonTable();
+        renderSidebar();
+        renderVerdict();
+        showToast("Option deleted");
+        return;
+      }
+
+      const critBtn = e.target.closest(".del-crit-btn");
+      if (critBtn) {
+        const dec = getActiveDecision();
+        const critId = critBtn.dataset.crit;
+        dec.comparison.criteria = dec.comparison.criteria.filter(c => c.id !== critId);
+        saveState();
+        renderComparisonTable();
+        renderVerdict();
+        showToast("Criterion deleted");
+      }
+    });
+
+    // Tabs
+    document.getElementById("tabs").addEventListener("click", (e) => {
+      const btn = e.target.closest(".tab-btn");
+      if (!btn) return;
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(`panel-${btn.dataset.tab}`).classList.add("active");
+    });
+
+    // Header editing
+    document.getElementById("decisionTitle").addEventListener("input", (e) => {
+      getActiveDecision().title = e.target.value;
+      saveState();
+      renderSidebar();
+    });
+
+    document.getElementById("decisionDesc").addEventListener("input", (e) => {
+      getActiveDecision().description = e.target.value;
+      saveState();
+    });
+
+    // New / Delete / Sample
+    document.getElementById("newDecisionBtn").addEventListener("click", () => {
+      const dec = createBlankDecision();
+      state.decisions.unshift(dec);
+      state.activeDecisionId = dec.id;
+      saveState();
+      renderAll();
+      showToast("Created new decision");
+    });
+
+    document.getElementById("loadSampleBtn").addEventListener("click", () => {
+      const sample = createSampleDecision();
+      state.decisions.unshift(sample);
+      state.activeDecisionId = sample.id;
+      saveState();
+      renderAll();
+      showToast("Loaded example decision");
+    });
+
+    document.getElementById("deleteDecisionBtn").addEventListener("click", () => {
+      if (state.decisions.length <= 1) {
+        showToast("At least one decision must remain");
+        return;
+      }
+      const dec = getActiveDecision();
+      state.decisions = state.decisions.filter(d => d.id !== dec.id);
+      state.activeDecisionId = state.decisions[0].id;
+      saveState();
+      renderAll();
+      showToast("Decision deleted");
+    });
+
+    // Pros & Cons Add
+    const addPro = () => {
+      const inp = document.getElementById("proInput");
+      const text = inp.value.trim();
+      if (!text) return;
+      const weight = Number(document.getElementById("proWeight").value);
+      getActiveDecision().prosCons.pros.push({ id: uid(), text, weight });
+      inp.value = "";
+      saveState();
+      renderProsCons();
+      renderSidebar();
+      renderVerdict();
+    };
+
+    const addCon = () => {
+      const inp = document.getElementById("conInput");
+      const text = inp.value.trim();
+      if (!text) return;
+      const weight = Number(document.getElementById("conWeight").value);
+      getActiveDecision().prosCons.cons.push({ id: uid(), text, weight });
+      inp.value = "";
+      saveState();
+      renderProsCons();
+      renderSidebar();
+      renderVerdict();
+    };
+
+    document.getElementById("addProBtn").addEventListener("click", addPro);
+    document.getElementById("proInput").addEventListener("keydown", e => { if (e.key === "Enter") addPro(); });
+    document.getElementById("addConBtn").addEventListener("click", addCon);
+    document.getElementById("conInput").addEventListener("keydown", e => { if (e.key === "Enter") addCon(); });
+
+    // Comparison Table Add
+    const addOption = () => {
+      const inp = document.getElementById("newOptionInput");
+      const name = inp.value.trim();
+      if (!name) return;
+      const dec = getActiveDecision();
+      const optId = uid();
+      dec.comparison.options.push({ id: optId, name });
+      dec.comparison.criteria.forEach(c => { c.scores[optId] = 5; });
+      inp.value = "";
+      saveState();
+      renderComparisonTable();
+      renderSidebar();
+      renderVerdict();
+    };
+
+    const addCriterion = () => {
+      const inp = document.getElementById("newCriterionInput");
+      const name = inp.value.trim();
+      if (!name) return;
+      const weight = Number(document.getElementById("newCriterionWeight").value);
+      const dec = getActiveDecision();
+      const scores = {};
+      dec.comparison.options.forEach(o => { scores[o.id] = 5; });
+      dec.comparison.criteria.push({ id: uid(), name, weight, scores, notes: {} });
+      inp.value = "";
+      saveState();
+      renderComparisonTable();
+      renderVerdict();
+    };
+
+    document.getElementById("addOptionBtn").addEventListener("click", addOption);
+    document.getElementById("newOptionInput").addEventListener("keydown", e => { if (e.key === "Enter") addOption(); });
+    document.getElementById("addCriterionBtn").addEventListener("click", addCriterion);
+    document.getElementById("newCriterionInput").addEventListener("keydown", e => { if (e.key === "Enter") addCriterion(); });
+
+    // SWOT Add
+    const addSwotItem = (quad) => {
+      const inp = document.querySelector(`.swot-input[data-quad="${quad}"]`);
+      const imp = document.querySelector(`.swot-impact[data-quad="${quad}"]`);
+      const text = inp.value.trim();
+      if (!text) return;
+      getActiveDecision().swot[quad].push({ id: uid(), text, impact: imp.value });
+      inp.value = "";
+      saveState();
+      renderSwot();
+      renderSidebar();
+      renderVerdict();
+    };
+
+    document.querySelectorAll(".swot-add").forEach(btn => {
+      btn.addEventListener("click", () => addSwotItem(btn.dataset.quad));
+    });
+    document.querySelectorAll(".swot-input").forEach(inp => {
+      inp.addEventListener("keydown", e => { if (e.key === "Enter") addSwotItem(inp.dataset.quad); });
+    });
+
+    // Export Markdown
+    document.getElementById("exportMdBtn").addEventListener("click", () => {
+      const dec = getActiveDecision();
+      const pc = getProsConsStats(dec);
+      const { ranked, maxPossible } = getComparisonRankings(dec);
+
+      let md = `# ${dec.title}\n`;
+      if (dec.description) md += `> ${dec.description}\n\n`;
+      md += `## 1. Pros & Cons (${pc.label} — ${pc.pct}%)\n`;
+      md += `### Pros (${pc.prosPts} pts)\n` + (dec.prosCons.pros.map(p => `- [Wt ${p.weight}] ${p.text}`).join("\n") || "- None") + "\n\n";
+      md += `### Cons (${pc.consPts} pts)\n` + (dec.prosCons.cons.map(c => `- [Wt ${c.weight}] ${c.text}`).join("\n") || "- None") + "\n\n";
+
+      md += `## 2. Comparison Table Ranking\n`;
+      ranked.forEach((r, i) => { md += `${i + 1}. **${r.name}** — ${r.score}/${maxPossible} pts (${r.pct}%)\n`; });
+
+      md += `\n## 3. SWOT Analysis\n`;
+      ["strengths", "weaknesses", "opportunities", "threats"].forEach(q => {
+        md += `### ${q.charAt(0).toUpperCase() + q.slice(1)}\n`;
+        md += (dec.swot[q].map(i => `- [${i.impact}] ${i.text}`).join("\n") || "- None") + "\n\n";
+      });
+
+      const blob = new Blob([md], { type: "text/markdown" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${(dec.title || "decision").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md`;
+      a.click();
+      showToast("Exported Markdown report");
+    });
+
+    // Backup & Restore JSON
+    document.getElementById("exportJsonBtn").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "hitresolver-backup.json";
+      a.click();
+      showToast("JSON backup downloaded");
+    });
+
+    document.getElementById("importJsonInput").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          if (parsed && Array.isArray(parsed.decisions) && parsed.decisions.length > 0) {
+            state = parsed;
+            saveState();
+            renderAll();
+            showToast("Backup restored");
+          } else {
+            showToast("Invalid backup file");
+          }
+        } catch {
+          showToast("Could not read JSON file");
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    renderAll();
+  </script>
+</body>
+</html>

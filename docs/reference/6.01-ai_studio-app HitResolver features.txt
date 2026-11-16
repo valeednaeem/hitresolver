@@ -1,0 +1,6 @@
+Features Included in The HitResolver
+Multi-Decision Workspace: Manage multiple decisions in the sidebar with automatic localStorage persistence, an included sample decision preset, JSON backup/restore, and one-click Markdown report export.
+Weighted Pros & Cons: Assign impact weights (3, 5, 8, 10) to every upside and downside with a live balance meter and verdict badge (Strong Go, Lean Yes, Balanced, Lean No, Strong No).
+Weighted Comparison Table: Add unlimited options and criteria, assign weights to criteria, enter 1–10 scores plus contextual notes, and view automatic live ranking cards showing the leading choice.
+2×2 SWOT Analysis: Track internal (Strengths, Weaknesses) and external (Opportunities, Threats) factors tagged by impact level (High, Med, Low).
+HitResolver Verdict Dashboard: Combines signals from all three frameworks into an executive overview with automated risk and growth prompts.
