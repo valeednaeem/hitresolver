@@ -1,6 +1,6 @@
 # HitResolver — Database & Persistence Design
 
-**Updated:** 2026-11-16 · **Stage:** Demo v0.1 (local-first)
+**Updated:** 2026-11-17 · **Stage:** Phase 3 complete (local-first) → Phase 4 design (cloud, proposed, not built)
 
 > There is **no database** in the demo, by design. The brief forbids introducing one "unless it provides real value at the current stage." This document records what exists instead, and the design that the future cloud store will follow.
 
@@ -106,14 +106,17 @@ Nothing is migrated yet — v1 is the first version.
 
 ### 4.1 JSON backup (full state)
 
+**Implemented Phase 3 format (authoritative):**
+
 ```json
 {
-  "app": "hitresolver",
   "schemaVersion": 1,
-  "exportedAt": "2026-11-16T…Z",
-  "state": { "activeDecisionId": "…", "decisions": [ … ] }
+  "activeDecisionId": "…",
+  "decisions": [ … ]
 }
 ```
+
+> Note: an earlier design draft sketched a wrapped envelope (`{ "app", "schemaVersion", "exportedAt", "state" }`). The Phase 3 implementation standardised on the bare `AppState` envelope above; it is authoritative and must remain supported.
 
 **Import rules (non-negotiable):**
 1. Parse; on failure → clear error, **no state change**
@@ -131,30 +134,44 @@ Generated from the engine's own outputs (never re-implemented in the export path
 
 ---
 
-## 5. Future: Cloud Persistence (v0.4 — designed, not built)
+## 5. Cloud Persistence (Phase 4 — designed, not built)
 
-The seam already exists: `StorageAdapter`.
+The `StorageAdapter` seam already anticipates this:
 
 ```
 StorageAdapter
 ├── LocalStorageAdapter      ← v0.1 (current)
-├── CloudStorageAdapter      ← v0.4
-└── HybridAdapter            ← v0.4: local cache + server sync, offline-tolerant
+├── CloudStorageAdapter      ← Phase 4 (proposed)
+└── HybridAdapter            ← Phase 4+ (local cache + server sync, offline-tolerant)
 ```
 
-**Design considerations to resolve before building (not now):**
+### 5.1 Proposed Phase 4 cloud store
 
-| Topic | Direction |
+- **Store:** managed PostgreSQL (recommended: Neon or Supabase Postgres) — document-shaped JSONB for workspace payloads is a pragmatic fit for the current `AppState` shape, with normalized tables available later for multi-workspace/team use.
+
+- **Proposed tables (initial):**
+
+| Table | Key fields | Purpose |
+|---|---|---|
+| `users` | `id`, `email`, `name`, `created_at` | Auth identity |
+| `workspaces` | `id`, `owner_id`, `name`, `data JSONB`, `created_at`, `updated_at` | One personal workspace per user at launch; extensible to many |
+| `decisions` | (optional normalized child table) | Later-phase multi-workspace support |
+
+- **Workspace payload:** reuse `AppState` (`{ schemaVersion, activeDecisionId, decisions }`) inside `workspaces.data` JSONB → single migration/validation path, preserves Phase 3 semantics.
+
+### 5.2 Design decisions
+
+| Topic | Proposed direction |
 |---|---|
-| Store | Likely a document store — a `Decision` maps naturally to one document |
-| Identity | Anonymous device id first; account linkage later (no PII until accounts exist) |
-| Conflict policy | Last-write-wins with `updatedAt` for the demo; CRDT/OT only if real-time collaboration ships |
-| Sync | Push on change, pull on focus; local remains authoritative while offline |
-| Encryption | TLS in transit; at rest per provider norms |
-| Retention | User-initiated export always available; deletion honored on request |
-| Migrations | Same `schemaVersion` discipline as local |
+| Identity → workspace link | `workspaces.owner_id → users.id` (server-derived ownership) |
+| Sync | Cloud authoritative for authenticated users; local cache optional (Hybrid later) |
+| Conflict policy | Last-write-wins by `updatedAt` (single-user scope); explicit import for migrations |
+| Encryption | TLS in transit; provider-managed at rest |
+| Retention | User-initiated export; deletion honored |
 
-**Do not build any of this for v0.1.** Recorded so the architecture is ready without premature infrastructure.
+### 5.3 Migration from localStorage
+
+- Anonymous local workspace → explicit import into the user's cloud workspace (validate → confirm → persist; no silent overwrite). Details in `LOCAL-TO-CLOUD-MIGRATION.md`.
 
 ---
 

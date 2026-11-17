@@ -4,19 +4,20 @@
 
 ---
 
-## Delivery Phases (Demo v0.1)
+## Delivery Phases (SaaS trajectory)
 
 | Phase | Name | Objective | Exit criterion |
 |---|---|---|---|
 | **0** | Discovery & Project Audit | Inspect repo, read references, pick stack, define scope & risks | ✅ Audit delivered |
 | **1** | Product Foundation & UI/UX | Design tokens, app shell, navigation, reusable components, responsive, data model | Navigable app with coherent visual identity |
 | **2** | Decision Engine | Pros & Cons, Matrix, SWOT, Verdict — as pure tested functions | **All engine tests green** |
-| **3** | Persistence & Export | Save, switch, JSON backup/restore, Markdown export, validation, error handling | Data survives refresh; bad import cannot corrupt data |
-| **4** | AI Assistant | AI experience + secure server boundary + honest fallback | Documented provider, boundary, limitations |
-| **5** | QA & Refinement | Functional, calculation, persistence, responsive, a11y, security, perf, regression | Critical & high defects fixed |
-| **6** | Demo Deployment | Verified preview/staging deployment | Live URL **verified working** |
+| **3** | Persistence & Export (local) | Save, switch, JSON backup/restore, Markdown export, validation, error handling | Data survives refresh; bad import cannot corrupt data |
+| **4** | Identity, User Management & Cloud Persistence | Accounts, cloud DB, ownership, sync, migration | Authenticated private workspaces; cross-user denial tested |
+| **5** | AI Decision Assistant | AI experience + secure server boundary + honest fallback | Documented provider, boundary, limitations |
+| **6** | QA, Security & Product Refinement | Functional, calculation, persistence, responsive, a11y, security, perf, regression | Critical & high defects fixed |
+| **7** | Demo Release & Feedback | Production deployment, user testing, feedback collection | Live URL verified working |
 
-**Sequencing rationale:** the engine (Phase 2) is built and tested *before* heavy UI polish, because calculation correctness is the project's #1 risk (`R1`). Persistence (Phase 3) follows the engine so save/load operates on a validated, tested model.
+**Sequencing rationale:** the engine (Phase 2) is built and tested *before* heavy UI polish, because calculation correctness is the project's #1 risk (`R1`). Persistence (Phase 3) follows the engine so save/load operates on a validated, tested model. Accounts & cloud persistence (Phase 4) precede AI (Phase 5) so AI operates on user-owned cloud data.
 
 ---
 

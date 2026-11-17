@@ -6,6 +6,19 @@ Significant technical and product decisions, with rationale, alternatives, benef
 
 ---
 
+## D-019 — Phase 4 authorized as architecture investigation only
+
+**Date:** 2026-11-17 · **Phase:** 4
+
+**Decided:** Owner approved Phase 4 scope: move from browser-only persistence toward a secure multi-user SaaS foundation (accounts, cloud database, ownership, sync, migration) **before** Phase 5 (AI assistant). Phase 4 implementation is **not yet authorized** — only the architecture investigation and documentation deliverables.
+
+**Why:** Phase 3 delivered local persistence/export/restore (approved); the product direction requires user-owned, cloud-backed decisions for cross-device SaaS continuity.
+
+**Benefits:** Clear phase boundary; no premature infrastructure.
+**Reversible:** Yes.
+
+---
+
 ## D-018 — Phase 3 backup envelope keeps `schemaVersion` and validates before accept
 
 **Date:** 2026-11-17 · **Phase:** 3
