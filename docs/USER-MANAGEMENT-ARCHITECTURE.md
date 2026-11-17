@@ -29,6 +29,10 @@ User (auth identity)
 - **Workspace:** a user's private container for decisions. **Phase 4 initial scope: one personal workspace per user.** Multi-workspace support is designed for but not implemented.
 - **Decision:** an independently evaluable decision record, owned by a workspace, evaluated by the pure engine.
 
+### 3.1 Initial cloud data containment
+
+For the first cloud release, decisions are **contained within the personal workspace's validated `AppState` JSONB snapshot** — the workspace document is the decision container. Normalized decision records are a later evolution (see `DATABASE-DESIGN.md` §5.4).
+
 ### 3.1 Ownership model
 
 - Every workspace record carries an **owner identity** derived from the **verified server-side session** — never from client input.

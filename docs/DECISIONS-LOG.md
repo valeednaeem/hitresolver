@@ -6,6 +6,19 @@ Significant technical and product decisions, with rationale, alternatives, benef
 
 ---
 
+## D-020 — Phase 4 architecture addendum decisions (2026-11-17)
+
+**Date:** 2026-11-17 · **Phase:** 4
+
+**Decided (via owner-authorized addendum):**
+- Auth.js Credentials does not provide a complete email/password account system; custom lifecycle implementation required — re-evaluation ran against Better Auth and Supabase Auth.
+- Next.js 16 uses `src/proxy.ts` (not `middleware.ts`); Proxy is not the full authorization/session layer — server-side data-layer authz + ownership enforcement required.
+- First cloud release data model: one personal workspace per user containing one validated `AppState` JSONB snapshot; decisions contained within the workspace document.
+
+**Pending (owner decisions):** final auth provider, DB host, email provider, session strategy, workspace provisioning timing, JSONB-vs-normalized final confirmation.
+
+---
+
 ## D-019 — Phase 4 authorized as architecture investigation only
 
 **Date:** 2026-11-17 · **Phase:** 4

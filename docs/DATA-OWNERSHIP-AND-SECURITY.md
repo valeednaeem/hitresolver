@@ -50,3 +50,9 @@ Session (verified server-side user)
 - [ ] Cross-user denial tested and green.
 - [ ] Rate limiting present on auth endpoints.
 - [ ] No secrets client-side; env handling rules followed.
+
+## 6. Phase 4 Addendum — Session & Security Design Decisions
+
+- **Session strategy:** revocable database sessions are recommended for the Phase 4 initial release (revocation on logout / account deletion), with JWT as an alternative; final owner decision pending. Identity is derived server-side per request.
+- **Binding security requirements (addendum §4):** revocation/logout behaviour; secure HttpOnly SameSite cookie configuration; session expiration/renewal; password hashing (provider/implementation); password-reset token storage/expiry/single-use; rate limiting strategy & cost; CSRF/Origin protection where applicable; account status checks; safe authentication error messages and logging.
+- **Ownership enforcement:** server-side data-access layer must enforce ownership on every read, create, update, delete, export, restore and account-deletion operation; client-supplied user identity is never trusted. Close to every database operation.

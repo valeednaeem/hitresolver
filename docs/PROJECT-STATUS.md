@@ -108,9 +108,10 @@ Next: Phase 4 — AI Decision Assistant (awaiting owner Phase 3 sign-off).
 | 1 — Product Foundation & UI/UX | **Complete — owner approved** |
 | 2 — Decision Engine | **Complete — owner approved** |
 | 3 — Persistence & Export | **Complete — delivered, awaiting owner review** |
-| 4 — AI Assistant | Not started |
-| 5 — QA & Refinement | Not started |
-| 6 — Demo Deployment | Not started |
+| 4 — Identity, User Management & Cloud Persistence | **Investigation + addendum delivered; awaiting owner implementation authorization** |
+| 5 — AI Decision Assistant | Not started (blocked until Phase 4 implemented and reviewed) |
+| 6 — QA, Security & Product Refinement | Not started |
+| 7 — Demo Release & Feedback | Not started |
 
 ## Known Bugs
 
@@ -147,7 +148,9 @@ Run with `npm test`. Type check: `npm run typecheck`. Lint: `npm run lint`. All 
 
 ## Next Recommended Action
 
-Phase 3 — Persistence & Export is delivered and green. Owner reviews the Phase 3 completion report, then authorizes **Phase 4 — AI Decision Assistant**.
+Phase 4 — Identity, User Management & Cloud Persistence: architecture investigation **and** focused addendum delivered (2026-11-17); Phase 4 implementation **not authorized**; Phase 5 AI **not authorized**.
+
+Awaiting owner review of the addendum and explicit implementation authorization. No Phase 4 code has been written.
 
 ---
 

@@ -1,6 +1,6 @@
 # HitResolver — Authentication Design
 
-**Updated:** 2026-11-17 · **Phase:** 4 (architecture investigation — proposed, not implemented)
+**Updated:** 2026-11-17 · **Phase:** 4 (architecture investigation — proposed, not implemented) · **Addendum:** 2026-11-17
 
 ---
 
@@ -23,28 +23,52 @@ Per owner direction, Phase 4 initial authentication scope:
 
 | Option | What it is | Next.js 16 fit | Security posture | Pricing / cost | Ops complexity | Migration risk |
 |---|---|---|---|---|---|---|
-| **A — Auth.js (`@auth/core`) + managed PostgreSQL** | Open-source auth framework; self-hostable; DB-backed sessions or JWT; email/password + built-in recovery/verification hooks | Native; actively maintained; Next 16 support present/expected | High — open source, auditable; rate limiting available; battle-tested | Self-hosted: free (code); DB on free tier (Neon/Supabase) → **≈ $0 at launch** | Low–medium (self-host wiring) | Low — no migration from nothing; schema new |
-| **B — Clerk** | Hosted auth SaaS | Excellent (first-class) | High | Free tier 10k MAU; paid thereafter → **cost risk later** | Very low | Medium — SDK-level migration from localStorage-era anonymous model is straightforward but vendor-coupled |
-| **C — Supabase Auth + Supabase Postgres | Hosted auth+DB | Good | High | Free tier 500MB DB + auth | Low | Medium-high — couples auth provider to DB vendor |
+| **A — Auth.js (`@auth/core`) + custom email/password lifecycle** | Open-source auth framework; Credentials provider delegates persistence/lifecycle to implementer | Native; self-hostable | High — open source, auditable; requires custom security-sensitive code (credential persistence, hashing, verification, reset, rate limiting) | Self-hosted: free (code); DB on free tier → **≈ $0 at launch** | Low–medium (self-host wiring) | Low — new build-out |
+| **B — Better Auth (`@better-auth/*`) + PostgreSQL** | Open-source auth framework with native email/password, verification, reset, sessions, rate limiting, DB integration | Supported | High — open source; more complete out-of-box account lifecycle | OSS + self-hosted DB → **≈ $0 at launch** | Low–medium | Low |
+| **C — Supabase Auth + Supabase PostgreSQL** | Hosted auth+DB | Good | High | Free tier 500 MB DB + auth; Pro $25/mo → cost risk later | Low | Medium-high — couples auth provider to DB vendor |
 | **D — Firebase Auth + Firestore | Hosted auth+DB | Moderate (not Next-native) | Medium | Free Spark tier | Low | Medium |
 
 ### 2.1 Comparison
 
-- **Security:** all four are defensible; A gives self-hosting control and avoids per-user SaaS spend at launch while retaining battle-tested behaviour (credential hashing, verification, recovery). **A rated best for this project's stated constraints** (minimal recurring cost, security-first owner, avoid premature complexity).
-- **Cost:** A ≈ $0 at launch (Auth.js OSS + Neon/Supabase free Postgres + Vercel free tier); B becomes paid beyond free tier; C couples services; D least aligned with stack.
-- **Operational complexity:** B lowest, C low, A medium, D low. Phase 4 initial wants "not overcomplicate first implementation" → B is tempting, but owner's constraint ("avoid unnecessary infrastructure and recurring costs, but not at the expense of data security") plus future multi-workspace/team plans favor **A with managed Postgres**.
-- **Migration risk:** A lowest for new build-out.
+- **Auth.js:** the **Credentials provider does not persist credential users or provide the complete password lifecycle** — registration persistence, password hashing, email verification, password reset and rate limiting must be implemented separately. This materially changes the engineering cost of the recommended path: a substantial custom security-sensitive implementation surface.
+- **Better Auth:** evaluated as the stronger self-hosted candidate for the owner’s completeness requirements (built-in lifecycle coverage), with PostgreSQL integration native.
+- **Supabase Auth:** evaluated as the managed candidate; couples database and auth.
+- **Decision criteria (owner):** Next.js 16.4.6 App Router compatibility · registration/email verification · login/logout · recovery/reset · revocable sessions · DB integration/migrations · rate limiting/abuse · account deletion & export · Vercel compatibility · maintenance burden/security responsibility/vendor lock-in · free-tier limits & future costs.
 
-## 3. Recommendation (Phase 4 initial)
+### 2.2 Comparison — built-in vs custom implementation surface
 
-**Primary recommendation: Auth.js (`@auth/core`) with email/password, backed by managed PostgreSQL (Neon or Supabase Postgres), deployed on Vercel.**
+| Function | Auth.js | Better Auth | Supabase Auth |
+|---|---|---|---|
+| Email/password login | Credentials (partial lifecycle) | Built-in | Built-in |
+| Registration | Custom | Built-in | Built-in |
+| Email verification | Custom | Built-in | Built-in |
+| Password reset | Custom | Built-in | Built-in |
+| Sessions (revocable) | Custom/integrable | Built-in | Built-in |
+| Rate limiting | Custom/external | Built-in | Built-in |
+| Account deletion / export | Custom | Built-in hooks | Built-in |
 
-- Auth provider: **Auth.js** with the database/email strategy (or JWT strategy for simplicity at launch, moving to database sessions later if revocation is needed).
-- Credentials: email + password (bcrypt via Auth.js); email verification and password recovery via Auth.js flows; custom email delivery can be wired later without schema change.
-- Sessions: session cookie (httpOnly, secure, sameSite) — JWT or database-backed; server derives identity per request.
-- Rate limiting: Auth.js built-in rate limiting (or Vercel/Upstash-based) for auth endpoints.
+### 2.3 Addendum decision (pending final owner choice)
+
+- Auth.js alone does **not** satisfy the “complete email/password account system” bar without custom lifecycle implementation.
+- Better Auth is explicitly evaluated as the likely preferred self-hosted route for built-in lifecycle coverage.
+- Supabase Auth remains a credible managed route.
+- **Final approach pending owner decision** before implementation.
+
+### 2.4 Addendum outcomes
+
+- Auth.js alone does **not** provide a complete email/password account system; the Credentials provider delegates the password lifecycle to the implementer.
+- The Phase 4 initial recommendation is re-anchored: a self-hosted open-source auth framework with a complete account lifecycle (Better Auth preferred candidate pending final owner decision) + managed PostgreSQL; Auth.js + custom lifecycle retained as a viable but costlier alternative.
+
+## 3. Recommendation (Phase 4 initial, revised by addendum)
+
+**Direction: self-hosted open-source auth (Better Auth preferred candidate, pending final owner decision) with managed PostgreSQL, deployed on Vercel.**
+
+- Auth provider: **Better Auth** preferred for built-in account lifecycle coverage (email/password, verification, reset, sessions, rate limiting, PostgreSQL); Auth.js with custom lifecycle remains a viable path (larger custom security-sensitive implementation surface).
+- Credentials: email + password via chosen provider; email verification and password recovery via chosen provider flows; custom email delivery can be wired later without schema change.
+- Sessions: session cookie (httpOnly, secure, sameSite) — revocable database sessions or JWT; server derives identity per request.
+- Rate limiting: provider built-in or Vercel/Upstash-based for auth endpoints.
 - Social login: deferred — additive provider config later, no schema change.
-- No paid service required at launch (self-hosted Auth.js OSS + free-tier DB).
+- No paid service required at launch (self-hosted auth OSS + free-tier DB).
 
 ## 4. Auth Flows
 

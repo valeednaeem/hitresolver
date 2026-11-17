@@ -173,6 +173,30 @@ StorageAdapter
 
 - Anonymous local workspace → explicit import into the user's cloud workspace (validate → confirm → persist; no silent overwrite). Details in `LOCAL-TO-CLOUD-MIGRATION.md`.
 
+### 5.4 Phase 4 addendum — JSONB workspace snapshot decision
+
+Owner decision (Phase 4 architecture addendum, 2026-11-17): for the **first cloud release**, the initial data model is:
+
+- **One personal workspace per user**, containing **one validated `AppState` JSONB snapshot**.
+
+- **Decisions are contained within the workspace document — not stored as separate child decision records** in the initial model. Rationale: preserves the existing state and backup semantics, avoids an unnecessary rewrite of the decision engine.
+
+- Required considerations (owner) that must be addressed during implementation design:
+  - Atomic updates and concurrent edits on workspace snapshots.
+  - Workspace versioning or optimistic concurrency.
+  - Maximum acceptable workspace size.
+  - How individual decision deletion and updates work inside the snapshot.
+  - How the model may later evolve into separate decision records without data loss.
+
+- If the product later needs independent decision queries, sharing, or collaboration, a normalized decision-record model may be more appropriate; the choice must be explicit, not ambiguous.
+
+### 5.5 Database hosts — kept distinct
+
+- **Supabase:** PostgreSQL + managed authentication bundled; free tier 500 MB DB + auth (may pause after inactivity; Pro from $25/month).
+- **Neon:** managed PostgreSQL kept independent of the authentication choice; free tier 1 GB storage/project.
+
+These are treated as **distinct candidates**, not interchangeable database hosts.
+
 ---
 
 ## 6. Data Safety Summary

@@ -18,6 +18,10 @@ Once a user is authenticated, **the cloud store is the source of truth**. Local 
 4. After successful cloud write, local copy may be cleared (user-facing action) — or left; local is non-authoritative for authenticated users.
 5. If the user already has cloud data, local anonymous data is **not** auto-merged/overwritten — user chooses import/replace/cancel.
 
+### 2.1 Initial cloud data containment
+
+In the initial cloud release, the user's personal cloud workspace holds one validated `AppState` JSONB snapshot; decisions are contained within that workspace document.
+
 ## 3. Backup / Export Compatibility
 
 - Phase 3 backup format (canonical, implemented): `{ schemaVersion, activeDecisionId, decisions }` = bare `AppState`.
