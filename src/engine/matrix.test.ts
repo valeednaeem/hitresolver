@@ -353,6 +353,25 @@ describe("W1/W6 — invalid weights never corrupt a total", () => {
 /* Leader, margin, close race (§2.3, E20)                              */
 /* ------------------------------------------------------------------ */
 
+describe("incomplete option may still lead, but is labelled (spec §2.4)", () => {
+  it("labels the leader when it carries missing cells", () => {
+    const result = evaluate(
+      [opt("a", "Alpha"), opt("b", "Beta")],
+      [
+        crit("c1", 10, { a: 9, b: 2 }, "Speed"),
+        crit("c2", 10, { b: 1 }, "Quality"), // Alpha missing here
+      ],
+    );
+    // Alpha leads (90 vs 30) but is flagged incomplete — it must be
+    // labelled so the provisional status is never hidden (spec §2.4).
+    expect(result.leaderIds).toEqual(["a"]);
+    const leader = result.options.find((o) => o.id === "a")!;
+    expect(leader.incomplete).toBe(true);
+    expect(result.incompleteOptionIds).toEqual(["a"]);
+    expect(result.close).toBe(false);
+  });
+});
+
 describe("margin & close race", () => {
   it("computes margin as leader − runner-up and compares to 5% of maxPossible", () => {
     // maxPossible = 100 → close threshold = 5.

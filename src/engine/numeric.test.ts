@@ -71,11 +71,12 @@ describe("coerceOneToTen (1–10 integer range)", () => {
   });
 
   it("rounds fractional input half-away-from-zero, then range-checks — E6/E25", () => {
-    expect(coerceOneToTen(3.6)).toBe(4); // E6
+    expect(coerceOneToTen(3.6)).toBe(4); // E6: fractional in range rounds up
     expect(coerceOneToTen(3.4)).toBe(3);
-    expect(coerceOneToTen(0.6)).toBe(1); // rounds INTO range
-    expect(coerceOneToTen(10.4)).toBe(10);
-    expect(coerceOneToTen(10.6)).toBeNull(); // rounds OUT of range → rejected
+    expect(coerceOneToTen(5.4)).toBe(5);
+    expect(coerceOneToTen(10.4)).toBeNull(); // out of range — rejected before rounding
+    expect(coerceOneToTen(10.6)).toBeNull(); // rounds to 11 — out of range
+    expect(coerceOneToTen(0.6)).toBeNull(); // below range — rejected before rounding
   });
 
   it("rejects 0, negatives and out-of-range values — never clamps (E3/E5/E11/E12)", () => {

@@ -42,13 +42,26 @@ export function VerdictPanel() {
           <div className="rounded-xl border border-line bg-canvas p-4">
             <Badge tone="primary">CALCULATED</Badge>
             <h4 className="mt-2 text-sm font-bold text-ink">Pros & Cons balance</h4>
-            <p className="mt-1 text-2xl font-extrabold text-ink tabular-nums">
-              {dashboard.prosCons.pct}%
-            </p>
-            <p className="text-xs text-ink-muted">
-              {dashboard.prosCons.prosPts} pro weight vs {dashboard.prosCons.consPts}{" "}
-              con weight · verdict {dashboard.prosCons.verdict}
-            </p>
+            {dashboard.prosCons.isEmpty ? (
+              <>
+                <p className="mt-1 text-2xl font-extrabold text-ink tabular-nums">
+                  Not enough information
+                </p>
+                <p className="text-xs text-ink-muted">
+                  No pros or cons were entered — no balance is calculated yet.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="mt-1 text-2xl font-extrabold text-ink tabular-nums">
+                  {dashboard.prosCons.pct}%
+                </p>
+                <p className="text-xs text-ink-muted">
+                  {dashboard.prosCons.prosPts} pro weight vs {dashboard.prosCons.consPts}{" "}
+                  con weight · verdict {dashboard.prosCons.verdict}
+                </p>
+              </>
+            )}
           </div>
 
           {/* Signal 2 — Comparison */}

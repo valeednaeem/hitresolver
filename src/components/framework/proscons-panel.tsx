@@ -82,7 +82,7 @@ export function ProsConsPanel() {
         <EmptyState
           icon={<ScaleIcon className="size-8" />}
           title="No entries yet"
-          description="Add upsides and downsides with impact weights (1–10). The balance meter below will compute here — until then the verdict is a placeholder, not a measurement."
+          description="Not enough information yet — add upsides and downsides with impact weights (1–10). Nothing has been measured, so no balance is presented; the verdict is not a finding."
         />
       ) : (
         <div className="space-y-5">
@@ -103,6 +103,12 @@ export function ProsConsPanel() {
               <Badge tone="warning" className="text-xs">
                 One side empty
               </Badge>
+            )}
+            {result.oneSided && (
+              <p className="text-xs text-ink-muted">
+                No {result.oneSided} entries were provided — the balance below
+                reflects one side only and is not a complete measurement.
+              </p>
             )}
           </div>
 

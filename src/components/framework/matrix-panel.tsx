@@ -133,6 +133,9 @@ export function MatrixPanel() {
               {result.close && (
                 <Badge tone="warning">Close race</Badge>
               )}
+              {leader.incomplete && (
+                <Badge tone="warning">Incomplete</Badge>
+              )}
             </div>
             {result.tied && (
               <p className="mt-2 text-sm text-ink-muted">
@@ -145,6 +148,12 @@ export function MatrixPanel() {
                 possible score); small weight changes could flip it.
               </p>
             )}
+            {leader.incomplete && (
+              <p className="mt-2 text-sm text-ink-muted">
+                This leader has unscored cells — its percentage is provisional
+                until missing scores are filled in.
+              </p>
+            )}
             <p className="mt-2 text-xs text-ink-subtle">
               This reflects the priorities you entered, not an objective measure.
             </p>
@@ -153,6 +162,14 @@ export function MatrixPanel() {
 
         {/* Ranked breakdown */}
         <div className="space-y-3">
+          {result.incompleteOptionIds.length > 0 && (
+            <p className="text-sm text-ink-muted">
+              Ranking includes incomplete evaluations (
+              {result.incompleteOptionIds.length} option
+              {result.incompleteOptionIds.length === 1 ? "" : "s"} flagged) — it
+              may be provisional.
+            </p>
+          )}
           <h4 className="text-xs font-bold text-ink-muted uppercase tracking-wide">
             Ranking
           </h4>

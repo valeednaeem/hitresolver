@@ -48,26 +48,21 @@ function collect(
 /* ------------------------------------------------------------------ */
 
 /**
- * Round half away from zero, then confirm the value is a finite number.
- * Used for weights and scores so `3.6 → 4` and `3.4 → 3`.
- */
-function coerceInt(raw: unknown): number | null {
-  const n = typeof raw === "string" ? Number(raw.trim()) : raw;
-  if (typeof n !== "number" || !Number.isFinite(n)) return null;
-  return n < 0 ? -Math.round(-n) : Math.round(n);
-}
-
-/**
  * Validate a weight or score against an inclusive integer range.
  * Rejects `NaN`, `±Infinity`, non-numerics, and out-of-range values.
+ *
+ * Policy (§0.1, Phase 2 review): the raw value is range-checked BEFORE
+ * rounding, so a fraction outside the range (e.g. `0.6` < 1 or `10.4` > 10)
+ * is rejected rather than rounded into the accepted range. In-range
+ * fractions are rounded half-away-from-zero and accepted (e.g. `5.4 → 5`).
  */
 export function validateRange(
   raw: unknown,
   range: { min: number; max: number },
   label: string,
 ): ValidationResult<number> {
-  const n = coerceInt(raw);
-  if (n === null) {
+  const n = typeof raw === "string" ? Number(raw.trim()) : raw;
+  if (typeof n !== "number" || !Number.isFinite(n)) {
     return fail([`${label} must be a number.`]);
   }
   if (n < range.min || n > range.max) {
@@ -75,7 +70,8 @@ export function validateRange(
       `${label} must be between ${range.min} and ${range.max} (received ${n}).`,
     ]);
   }
-  return pass(n);
+  const rounded = n < 0 ? -Math.round(-n) : Math.round(n);
+  return pass(rounded);
 }
 
 /** Validate a criterion or pros/cons impact weight (1–10). */

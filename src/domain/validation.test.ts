@@ -64,8 +64,23 @@ describe("validateWeight", () => {
   });
 
   it("rejects a fraction that rounds out of range", () => {
-    expect(validateWeight(10.4).ok).toBe(true); // rounds to 10
-    expect(validateWeight(10.6).ok).toBe(false); // rounds to 11
+    expect(validateWeight(10.4).ok).toBe(false); // rejected before rounding
+    expect(validateWeight(10.6).ok).toBe(false); // rounds to 11 — out of range
+  });
+
+  it("rejects fractions below the allowed range before rounding (Phase 2 review)", () => {
+    expect(validateWeight(0.6).ok).toBe(false); // would round to 1 — must reject
+    expect(validateScore(0.6).ok).toBe(false);
+  });
+
+  it("accepts in-range fractional weights via rounding", () => {
+    const r = validateWeight(5.4);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value).toBe(5);
+
+    const s = validateScore(3.6);
+    expect(s.ok).toBe(true);
+    if (s.ok) expect(s.value).toBe(4);
   });
 
   it("accepts numeric strings (form input)", () => {

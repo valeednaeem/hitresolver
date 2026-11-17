@@ -138,6 +138,7 @@ describe("empty framework states", () => {
       </WorkspaceProvider>,
     );
     await waitFor(() => expect(screen.getByText("No entries yet")).toBeTruthy());
+    expect(screen.getByText(/Not enough information/i)).toBeTruthy();
   });
 
   it("shows an honest matrix status message for a blank decision", async () => {

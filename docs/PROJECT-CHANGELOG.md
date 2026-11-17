@@ -7,13 +7,13 @@ Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 
-### Phase 2 — Decision Engine & Framework Panels (2026-11-16)
+### Phase 2 — Decision Engine & Framework Panels (2026-11-16; focused review fixes 2026-11-17)
 
 **Added**
 - Decision engine (`src/engine/`, pure TypeScript, zero React/DOM/storage/AI imports):
-  - `numeric.ts` — numeric policy: `isFiniteNumber`, `roundHalfAwayFromZero`, `roundHalfUp`, `coerceOneToTen` (1–10, fractional→round half-away-from-zero→range-check), `percentOf` (multiply-before-divide, half-up display rounding).
+  - `numeric.ts` — numeric policy: `isFiniteNumber`, `roundHalfAwayFromZero`, `roundHalfUp`, `coerceOneToTen` (1–10; in-range fractions round, out-of-range fractions rejected before rounding), `percentOf` (multiply-before-divide, half-up display rounding).
   - `proscons.ts` — weighted pros/cons: Σ weights, positive-share pct (50 placeholder on empty ledger), verdict bands (Strong Go / Lean Yes / Balanced / Lean No / Strong No), invalid-weight exclusion, one-sided ledger detection.
-  - `matrix.ts` — weighted comparison matrix: `maxPossible = Σ(weight×10)`, `rawScore = Σ(score×weight)` over available cells, pct half-up, competition ranking (1, 1, 3), explicit ties, close-race margin (≤ 5% of maxPossible), missing-cell handling (never defaulted — W2), invalid weights excluded (W1/W5/W6), structural duplicate/orphan detection.
+  - `matrix.ts` — weighted comparison matrix: `maxPossible = Σ(weight×10)`, `rawScore = Σ(score×weight)` over available cells, pct half-up, competition ranking (1, 1, 3), explicit ties, close-race margin (≤ 5% of maxPossible), missing-cell handling (never defaulted — W2), invalid weights excluded (W1/W5/W6), per-cell breakdown, incomplete-leader labelling.
   - `swot.ts` — SWOT: four distinct quadrants, internal/external + helpful/harmful axes, High-impact risk flagging, posture ladder (Not assessed / Exposed / Strained / Favourable / Balanced), invalid-impact rejection.
   - `verdict.ts` — verdict dashboard: 10 completeness checks → honest fill-in `completenessPct`; 10 named `R-*` recommendation rules ordered data → risk → strategic → completeness; no composite score (brief §5F / spec §4.1/§4.5).
 - Engine tests: 116 passing (numeric, pros-cons, matrix, swot, verdict) — every spec formula §1–§4, every edge case E1–E25, owner scenarios, property checks.
@@ -21,12 +21,13 @@ Format loosely follows Keep a Changelog.
 - Workspace reducer: `updateProsCons`, `updateComparison`, `updateSwot` actions (data-layer only, no formula logic in state).
 - Validation: duplicate option/criterion/pros-cons/SWOT identifiers now rejected on load/import.
 
+**Changed (Phase 2 focused calculation-semantics review, 2026-11-17)**
+- `coerceOneToTen` (engine) and `validateRange` (domain) now range-check the raw value before half-away-from-zero rounding, so out-of-range fractions (`0.6`, `10.4`) are rejected instead of being rounded into the accepted range; in-range fractions still round (`5.4 → 5`, `3.6 → 4`).
+- Matrix UI: incomplete leaders now carry an explicit “Incomplete” badge plus provisional wording; ranking shows a provisional note when any option is flagged incomplete.
+- Pros & Cons UI: empty ledger now communicates “Not enough information yet” instead of presenting the 50% placeholder as a balance; one-sided ledgers explain the missing side.
+
 **Fixed**
 - `minimatch` advisory GHSA-g3hv-75wg-m249 (moderate, DoS via globparts) via scoped override `@typescript-eslint/typescript-estree → minimatch ^11.0.8`; `npm audit` now reports **0 vulnerabilities**.
-
-**Known issues**
-- Verdict Dashboard: recommendation + signal rendering is data-complete; Markdown export of the verdict section ships in Phase 3 (W22).
-- No per-criterion sensitivity analysis yet (engine already exposes per-cell contributions for it).
 
 ### Phase 1 — Product Foundation & UI/UX (2026-11-16)
 

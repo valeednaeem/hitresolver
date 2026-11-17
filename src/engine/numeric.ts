@@ -34,15 +34,21 @@ export function roundHalfUp(value: number): number {
 /**
  * Coerce an unknown value to an integer in 1–10 inclusive.
  *
- * Accepts numeric strings (form input), rounds half-away-from-zero, then
- * range-checks. Returns `null` for anything invalid — `null` never
- * reaches a total (spec E4, E11, E12, E25).
+ * Policy (spec §0.1, Phase 2 review): reject the raw value against the
+ * range BEFORE rounding, then round half-away-from-zero and range-check.
+ * This guarantees an out-of-range value (e.g. `0.6` below 1, or `10.4`
+ * above 10) is rejected rather than silently rounded into range, while
+ * fractional in-range values still round (e.g. `5.4 → 5`, `3.6 → 4`).
+ * Returns `null` for anything invalid — `null` never reaches a total
+ * (spec E4, E11, E12, E25).
  */
 export function coerceOneToTen(raw: unknown): number | null {
   const n = typeof raw === "string" ? Number(raw.trim()) : raw;
   if (!isFiniteNumber(n)) return null;
+  if (n < 1 || n > 10) return null;
   const rounded = roundHalfAwayFromZero(n);
-  return rounded >= 1 && rounded <= 10 ? rounded : null;
+  if (rounded < 1 || rounded > 10) return null;
+  return rounded;
 }
 
 /**

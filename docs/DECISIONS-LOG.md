@@ -6,6 +6,19 @@ Significant technical and product decisions, with rationale, alternatives, benef
 
 ---
 
+## D-017 — Numeric range policy: reject before rounding (Phase 2 focused review)
+
+**Date:** 2026-11-17 · **Phase:** 2
+
+**Decided:** Both the engine (`coerceOneToTen`) and the domain validators (`validateRange`) now range-check the raw value against the allowed range **before** applying half-away-from-zero rounding. Fractional values inside the range round (e.g. `5.4 → 5`, `3.6 → 4`); values outside the range (`0.6 < 1`, `10.4 > 10`) are rejected before rounding can pull them into range.
+
+**Why:** Phase 2 review item 3 required that rounding could never silently convert an out-of-range value into a valid one, and that engine + UI validation stay consistent.
+
+**Benefits:** Invariant is now simple and testable: reject-if-out-of-range, then round.
+**Reversible:** Yes.
+
+---
+
 ## D-016 — Scoped `minimatch` override resolves the single remaining audit advisory
 
 **Date:** 2026-11-16 · **Phase:** 2

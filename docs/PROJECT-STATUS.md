@@ -3,13 +3,19 @@
 > This file is the single source of truth for where the project stands.
 > Updated at the end of every meaningful phase or milestone.
 
-**Last updated:** 2026-11-16 (end of Phase 2)
+**Last updated:** 2026-11-17 (end of Phase 2 + focused calculation-semantics review)
 
 ---
 
 ## Current Phase
 
 **Phase 2 — Decision Engine — COMPLETE (awaiting owner review)**
+
+Focused Phase 2 review (owner, 2026-11-17): **approved in principle**; three calculation-semantics clarifications resolved with corrections applied before Phase 3:
+
+1. **Missing matrix scores** — verified and hardened: incomplete leaders are labelled `Incomplete` with provisional wording; rankings note incomplete evaluations; missing cells never substituted (engine + UI).
+2. **Empty Pros & Cons** — UI now shows “Not enough information yet” for an empty ledger; one-sided ledgers explain the missing side. Engine keeps the spec-mandated placeholder (E1) for programmatic completeness.
+3. **Numeric validation** — reject-before-rounding implemented in engine + domain (`coerceOneToTen`, `validateRange`); out-of-range fractions (`0.6`, `10.4`) rejected; in-range fractions still round.
 
 Next: Phase 3 — Persistence & Export.
 
@@ -69,7 +75,7 @@ Next: Phase 3 — Persistence & Export.
 
 ### Phase 2 quality gates (all executed and green)
 
-- [x] `npx vitest run` — **186 tests passing** (61 Phase 1 + 116 engine + 9 new component tests)
+- [x] `npx vitest run` — **189 tests passing** (61 Phase 1 + 116 engine + 9 component + new focused-review regressions)
 - [x] `npm run typecheck` — clean
 - [x] `npm run lint` — clean (0 errors, 0 warnings)
 - [x] `npm run build` — clean, static `/` prerendered
@@ -77,7 +83,7 @@ Next: Phase 3 — Persistence & Export.
 
 ## Work In Progress
 
-- Owner review of Phase 2 completion report (engine maths, panel behaviour, remaining known limitations).
+- Owner review of Phase 2 completion report and focused calculation-semantics review (2026-11-17).
 
 ## Remaining Tasks
 
@@ -125,7 +131,7 @@ Run with `npm test`. Type check: `npm run typecheck`. Lint: `npm run lint`. All 
 
 ## Next Recommended Action
 
-Owner reviews the Phase 2 completion report against the Phase 2 acceptance criteria, then gives the go for **Phase 3 — Persistence & Export**.
+Owner reviews the Phase 2 completion report and the focused calculation-semantics review (resolved 2026-11-17), then gives the go for **Phase 3 — Persistence & Export**.
 
 ---
 
