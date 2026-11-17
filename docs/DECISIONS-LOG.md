@@ -6,6 +6,19 @@ Significant technical and product decisions, with rationale, alternatives, benef
 
 ---
 
+## D-018 — Phase 3 backup envelope keeps `schemaVersion` and validates before accept
+
+**Date:** 2026-11-17 · **Phase:** 3
+
+**Decided:** JSON backups serialise the full `AppState` as `{ schemaVersion, activeDecisionId, decisions }` and are accepted only through `validateAppState` (`parseBackup`). The envelope carries the existing `SCHEMA_VERSION = 1`; any future data-model evolution must bump it and keep older backups readable or clearly rejected.
+
+**Why:** The Phase 3 brief requires an import format designed with a schema version for future data-model changes without unnecessarily breaking old backups, plus validate-before-accept and reject-malformed/unsupported/duplicate-id/empty imports with meaningful messages.
+
+**Benefits:** Portable, versioned, safe-by-construction backups; no new dependencies; no coupling between engine and storage.
+**Reversible:** Yes.
+
+---
+
 ## D-017 — Numeric range policy: reject before rounding (Phase 2 focused review)
 
 **Date:** 2026-11-17 · **Phase:** 2

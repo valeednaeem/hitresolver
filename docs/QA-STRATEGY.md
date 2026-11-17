@@ -1,6 +1,6 @@
 # HitResolver — QA Strategy
 
-**Updated:** 2026-11-16 · **Phase:** 0 (established) → 5 (executed)
+**Updated:** 2026-11-17 · **Phase:** 0 (established) → 3 (exit gate executed) → 5 (executed)
 
 ---
 
@@ -45,7 +45,20 @@ The decision engine is HitResolver's signature feature and the project's #1 risk
 
 ---
 
-## 4. Per-Defect Regression Coverage
+## 4. Phase 3 — Persistence & Export Exit Gate (2026-11-17)
+
+**Required before Phase 3 work is considered complete:**
+
+- [x] Backup module (`src/storage/backup.ts`) funnels every import through `validateAppState` (validate-before-accept)
+- [x] Corrupt JSON / unsupported schema version / empty decisions / dangling `activeDecisionId` / duplicate ids / unknown references / out-of-range weights rejected with concrete errors
+- [x] Restore requires explicit user confirmation (modal) before replacing existing decisions; invalid files never open the confirm modal
+- [x] Markdown export includes decision details, Pros & Cons, Matrix, SWOT, Verdict Dashboard, risks/recommendations and incomplete warnings, reflecting the actual state
+- [x] Persistence stayed behind `StorageAdapter`; no DB/auth/subscriptions/cloud; no new dependencies; AI architecture untouched
+- [x] `npm test` green (engine, domain, storage, component — **215 tests**), `npm run lint` / `npm run typecheck` / `npm run build` green, `npm audit` 0 vulnerabilities
+
+---
+
+## 5. Per-Defect Regression Coverage
 
 Each catalogued prototype weakness maps to at least one test. Named so the link is obvious:
 
@@ -69,7 +82,7 @@ Each catalogued prototype weakness maps to at least one test. Named so the link 
 
 ---
 
-## 5. Manual Test Script — Critical Flows (Phase 5)
+## 6. Manual Test Script — Critical Flows (Phase 5)
 
 Run end-to-end on desktop **and** mobile viewport before release.
 
@@ -91,7 +104,7 @@ Run end-to-end on desktop **and** mobile viewport before release.
 
 ---
 
-## 6. Responsive Checks
+## 7. Responsive Checks
 
 | Viewport | Must verify |
 |---|---|
@@ -102,7 +115,7 @@ Run end-to-end on desktop **and** mobile viewport before release.
 
 ---
 
-## 7. Accessibility Checks
+## 8. Accessibility Checks
 
 - [ ] Full keyboard navigation: tabs, sidebar, forms, modals, delete confirmations
 - [ ] Visible focus rings on all interactive elements
@@ -116,7 +129,7 @@ Run end-to-end on desktop **and** mobile viewport before release.
 
 ---
 
-## 8. Security Checks
+## 9. Security Checks
 
 - [ ] No `innerHTML` / `dangerouslySetInnerHTML` with user data (lint-enforced)
 - [ ] No secrets in the client bundle (build-output search)
@@ -129,7 +142,7 @@ Run end-to-end on desktop **and** mobile viewport before release.
 
 ---
 
-## 9. Performance Checks
+## 10. Performance Checks
 
 - [ ] No full-state serialisation on every keystroke (debounced autosave)
 - [ ] First load renders without layout shift
@@ -139,7 +152,7 @@ Run end-to-end on desktop **and** mobile viewport before release.
 
 ---
 
-## 10. Exit Gate — Phase 5
+## 11. Exit Gate — Phase 5
 
 Release is blocked until **all** hold:
 

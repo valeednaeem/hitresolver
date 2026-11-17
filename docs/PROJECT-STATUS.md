@@ -3,21 +3,22 @@
 > This file is the single source of truth for where the project stands.
 > Updated at the end of every meaningful phase or milestone.
 
-**Last updated:** 2026-11-17 (end of Phase 2 + focused calculation-semantics review)
+**Last updated:** 2026-11-17 (end of Phase 3 — persistence & export delivered)
 
 ---
 
 ## Current Phase
 
-**Phase 2 — Decision Engine — COMPLETE (awaiting owner review)**
+**Phase 3 — Persistence & Export — COMPLETE (delivered; awaiting owner review before Phase 4)**
 
-Focused Phase 2 review (owner, 2026-11-17): **approved in principle**; three calculation-semantics clarifications resolved with corrections applied before Phase 3:
+Phase 3 delivered the full backup/restore/report loop the brief requires:
 
-1. **Missing matrix scores** — verified and hardened: incomplete leaders are labelled `Incomplete` with provisional wording; rankings note incomplete evaluations; missing cells never substituted (engine + UI).
-2. **Empty Pros & Cons** — UI now shows “Not enough information yet” for an empty ledger; one-sided ledgers explain the missing side. Engine keeps the spec-mandated placeholder (E1) for programmatic completeness.
-3. **Numeric validation** — reject-before-rounding implemented in engine + domain (`coerceOneToTen`, `validateRange`); out-of-range fractions (`0.6`, `10.4`) rejected; in-range fractions still round.
+1. **Reliable persistence** — via the existing `StorageAdapter` (localStorage backend), unchanged architecture; debounced save + dirty-gating + flush-on-hide retained.
+2. **JSON export / import** — versioned backup envelope (`schemaVersion`), validate-before-accept through `validateAppState`, explicit confirmation before restore replaces existing decisions, typed errors.
+3. **Markdown export** — `buildMarkdownReport` via the engine evaluators; decision details, Pros & Cons, Matrix, SWOT, Verdict Dashboard, risks/recommendations, incomplete warnings.
+4. **Reliability** — corrupt JSON, bad schema version, duplicate ids, empty imports, unknown references, out-of-range weights all rejected before restore; storage failures surfaced via the existing typed storage problem path.
 
-Next: Phase 3 — Persistence & Export.
+Next: Phase 4 — AI Decision Assistant (awaiting owner Phase 3 sign-off).
 
 ---
 
@@ -81,17 +82,32 @@ Next: Phase 3 — Persistence & Export.
 - [x] `npm run build` — clean, static `/` prerendered
 - [x] Engine + domain + storage suites DOM-free (node env); component suite opts in via `@vitest-environment jsdom`
 
+### Phase 3 — Persistence & Export (2026-11-17)
+
+- [x] Backup helpers (`src/storage/backup.ts`): `buildBackupPayload`, `parseBackup` (validate-before-accept), `downloadTextFile`.
+- [x] Markdown report builder (`src/engine/report.ts`): `buildMarkdownReport(decision)` via engine evaluators; sections: decision details, Pros & Cons, Weighted Comparison Matrix, SWOT, Verdict Dashboard, Risks & Recommendations, Incomplete Evaluations.
+- [x] Workspace header: Export JSON / Export Markdown / Import JSON + restore confirmation modal.
+- [x] Workspace reducer: `restore` action (replaces state; treated as user mutation so it persists; clears storage problem).
+- [x] New tests: backup (13 cases), report (5 cases), workspace reducer (5 cases), header UI (5 cases).
+- [x] Phase 3 quality gates (all executed and green):
+
+- [x] `npx vitest run` — **215 tests passing** (189 Phase 2 + 26 Phase 3)
+- [x] `npm run typecheck` — clean
+- [x] `npm run lint` — clean (0 errors, 0 warnings)
+- [x] `npm run build` — clean, static `/` prerendered
+- [x] `npm audit` — **0 vulnerabilities**
+
 ## Work In Progress
 
-- Owner review of Phase 2 completion report and focused calculation-semantics review (2026-11-17).
+- Owner review of the Phase 3 completion report and sign-off before Phase 4 — **in progress**.
 
 ## Remaining Tasks
 
 | Phase | Status |
 |---|---|
 | 1 — Product Foundation & UI/UX | **Complete — owner approved** |
-| 2 — Decision Engine | **Complete — awaiting owner review** |
-| 3 — Persistence & Export | Not started |
+| 2 — Decision Engine | **Complete — owner approved** |
+| 3 — Persistence & Export | **Complete — delivered, awaiting owner review** |
 | 4 — AI Assistant | Not started |
 | 5 — QA & Refinement | Not started |
 | 6 — Demo Deployment | Not started |
@@ -112,7 +128,7 @@ See `PHASE0-AUDIT.md` §6. Top three:
 
 ## Test Status
 
-**186 tests passing (9 files).** Covers: weight/score/text/impact validation (reject-don't-clamp, NaN, Infinity, out-of-range, duplicate identifiers), full `AppState` shape validation, factories (sample content preserved, unique ids), localStorage adapter (round-trip, corrupt reporting, quota/unavailable failures, dangling-id repair, clear scoping), engine numeric policy (E22/E25/E6), Pros & Cons (E1–E6, E23 boundaries), Matrix (E7–E20 + missing/weight/leader/margin/tie/breakdown cases), SWOT posture + invalid impact, Verdict completeness + recommendations + determinism, and framework panels via jsdom.
+**215 tests passing (13 files).** Covers: weight/score/text/impact validation (reject-don't-clamp, NaN, Infinity, out-of-range, reject-before-rounding, duplicate identifiers), full `AppState` shape validation, factories, localStorage adapter, engine numeric policy, Pros & Cons, Matrix, SWOT, Verdict, framework panels, backup export/import helpers, markdown report builder, and workspace reducer actions (create/duplicate/remove/restore).
 
 Run with `npm test`. Type check: `npm run typecheck`. Lint: `npm run lint`. All three: `npm run check`.
 
@@ -123,7 +139,7 @@ Run with `npm test`. Type check: `npm run typecheck`. Lint: `npm run lint`. All 
 ## Limitations (stated plainly)
 
 - This is a **demo**, not a production SaaS.
-- Data is stored in **browser `localStorage` only** — it is **not** cloud-synced, **not** available across devices, and **not** backed up unless the user exports JSON (export ships in Phase 3).
+- Data is stored in **browser `localStorage` only** — it is **not** cloud-synced, **not** available across devices, and **not** backed up unless the user exports JSON (Phase 3 export/restore now shipped — still local-only by design).
 - There are **no user accounts** and **no authentication**.
 - The framework panels now run **real engine calculations** (Phase 2). Remaining plain-language gaps: no per-option scoring UI for every criterion yet beyond the editor, and no AI assistant (Phase 4).
 - The AI assistant cannot be connected to a real model yet — no provider is configured. Anything AI-shaped in the demo is **clearly labelled as simulated**.
@@ -131,7 +147,7 @@ Run with `npm test`. Type check: `npm run typecheck`. Lint: `npm run lint`. All 
 
 ## Next Recommended Action
 
-Owner reviews the Phase 2 completion report and the focused calculation-semantics review (resolved 2026-11-17), then gives the go for **Phase 3 — Persistence & Export**.
+Phase 3 — Persistence & Export is delivered and green. Owner reviews the Phase 3 completion report, then authorizes **Phase 4 — AI Decision Assistant**.
 
 ---
 

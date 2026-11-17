@@ -1,14 +1,23 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ChangeEvent } from "react";
 import { useWorkspace } from "@/state/workspace";
 import { validateField } from "@/domain/validation";
-import { RANGES } from "@/domain/types";
+import { RANGES, type AppState } from "@/domain/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CopyIcon, TrashIcon, MenuIcon } from "@/components/ui/icons";
+import {
+  CopyIcon,
+  TrashIcon,
+  MenuIcon,
+  DownloadIcon,
+  UploadIcon,
+  FileTextIcon,
+} from "@/components/ui/icons";
 import { Modal, ModalActions } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
+import { buildBackupPayload, downloadTextFile, parseBackup } from "@/storage/backup";
+import { buildMarkdownReport } from "@/engine/report";
 
 interface WorkspaceHeaderProps {
   onOpenSidebar: () => void;
@@ -16,14 +25,19 @@ interface WorkspaceHeaderProps {
 
 /**
  * Decision header: inline-editable title and description, plus the
- * duplicate and delete actions.
+ * duplicate, delete, and backup/restore actions.
  *
  * Editing is local-state-first with commit-on-blur/Enter, so the sidebar
  * does not re-sort on every keystroke; validation errors are shown
  * inline and never silently clamp (spec §0.1).
+ *
+ * Backup (Phase 3): export downloads the full state as a versioned JSON
+ * backup; markdown export downloads a generated report for the active
+ * decision. Import parses + validates through the backup layer and only
+ * replaces state after an explicit confirmation.
  */
 export function WorkspaceHeader({ onOpenSidebar }: WorkspaceHeaderProps) {
-  const { activeDecision, data, updateMeta, duplicate, remove } = useWorkspace();
+  const { activeDecision, data, updateMeta, duplicate, remove, restore } = useWorkspace();
   const { toast } = useToast();
 
   const [title, setTitle] = useState(activeDecision.title);
@@ -32,6 +46,8 @@ export function WorkspaceHeader({ onOpenSidebar }: WorkspaceHeaderProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editingId, setEditingId] = useState(activeDecision.id);
   const titleRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingRestore, setPendingRestore] = useState<AppState | null>(null);
 
   // Re-sync local edits when the active decision changes. Adjusting state
   // during render (rather than in an effect) avoids a frame where the new
@@ -78,6 +94,52 @@ export function WorkspaceHeader({ onOpenSidebar }: WorkspaceHeaderProps) {
     remove(activeDecision.id);
     setConfirmOpen(false);
     toast(`Deleted "${title}"`, "success");
+  };
+
+  /* ---- Backup / restore (Phase 3) ---- */
+
+  const handleExportJson = () => {
+    const text = buildBackupPayload(data);
+    downloadTextFile(
+      `hitresolver-backup-${new Date().toISOString().slice(0, 10)}.json`,
+      text,
+    );
+    toast("Backup downloaded", "success");
+  };
+
+  const handleExportMarkdown = () => {
+    const text = buildMarkdownReport(activeDecision);
+    downloadTextFile(
+      `decision-report-${activeDecision.id}.md`,
+      text,
+      "text/markdown",
+    );
+    toast("Markdown report downloaded", "success");
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImportChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Allow re-selecting the same file later.
+    e.target.value = "";
+    if (!file) return;
+    const text = await file.text();
+    const result = parseBackup(text);
+    if (!result.ok) {
+      toast(result.errors[0] ?? "The file could not be imported.", "error");
+      return;
+    }
+    setPendingRestore(result.state);
+  };
+
+  const handleRestoreConfirm = () => {
+    if (!pendingRestore) return;
+    restore(pendingRestore);
+    setPendingRestore(null);
+    toast("Backup restored", "success");
   };
 
   return (
@@ -164,7 +226,31 @@ export function WorkspaceHeader({ onOpenSidebar }: WorkspaceHeaderProps) {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<DownloadIcon className="size-4" />}
+              onClick={handleExportJson}
+            >
+              Export JSON
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<FileTextIcon className="size-4" />}
+              onClick={handleExportMarkdown}
+            >
+              Export Markdown
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<UploadIcon className="size-4" />}
+              onClick={handleImportClick}
+            >
+              Import JSON
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -214,6 +300,43 @@ export function WorkspaceHeader({ onOpenSidebar }: WorkspaceHeaderProps) {
             onConfirm={handleDelete}
           />
         }
+      />
+
+      {/* Restore confirmation — only opened after a validated import. */}
+      <Modal
+        open={pendingRestore !== null}
+        onClose={() => setPendingRestore(null)}
+        title="Restore this backup?"
+        description={
+          pendingRestore && (
+            <>
+              <strong className="text-ink">
+                {pendingRestore.decisions.length}
+              </strong>{" "}
+              decision{pendingRestore.decisions.length === 1 ? "" : "s"} will be
+              restored and replace the {data.decisions.length} decision
+              {data.decisions.length === 1 ? "" : "s"} currently saved in this
+              browser. Any existing decisions will be overwritten.
+            </>
+          )
+        }
+        footer={
+          <ModalActions
+            cancelLabel="Cancel"
+            confirmLabel="Restore backup"
+            onCancel={() => setPendingRestore(null)}
+            onConfirm={handleRestoreConfirm}
+          />
+        }
+      />
+
+      {/* Hidden file input driving the JSON import flow. */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/json,.json"
+        className="hidden"
+        onChange={handleImportChange}
       />
     </header>
   );

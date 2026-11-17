@@ -7,6 +7,29 @@ Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 
+### Phase 3 — Persistence & Export (2026-11-17)
+
+**Added**
+- Backup module (`src/storage/backup.ts`):
+  - `buildBackupPayload(state)` — serialises the versioned `{ schemaVersion, activeDecisionId, decisions }` envelope.
+  - `parseBackup(text)` — JSON parse → full `validateAppState` validation (validate-before-accept); returns concrete error list; malformed JSON, unsupported schema versions, empty decision lists, dangling `activeDecisionId`, duplicate ids and unknown references all rejected.
+  - `downloadTextFile(filename, text, mime?)` — client-side Blob download helper (JSON / Markdown mime).
+- Markdown report builder (`src/engine/report.ts`): `buildMarkdownReport(decision)` composes the engine evaluators into a full report — decision details, Pros & Cons, Weighted Comparison Matrix, SWOT, Verdict Dashboard, Risks & Recommendations (`R-*`), Incomplete Evaluations — with honest empty/incomplete states.
+- Workspace header actions (`src/components/shell/workspace-header.tsx`): **Export JSON** (full workspace backup download), **Export Markdown** (active decision report download), **Import JSON** (hidden file input → parse → confirm modal → restore). Invalid files surface the first validation error via toast and never open the confirm modal.
+- Workspace reducer: new `restore` action (replaces `data`, marks dirty so the debounced save persists the restored state, clears storage problem).
+
+**Tests** (26 new; suite now **215 passing** across 13 files)
+- `src/storage/backup.test.ts` — build/parse/download: valid round-trip, corrupt JSON, unsupported schema version, empty decisions, dangling active id, duplicate ids, unknown option reference, out-of-range weight, download via anchor.
+- `src/engine/report.test.ts` — all six required report sections, decision title/description, honest empty state, incomplete-flag wording.
+- `src/state/workspace.test.ts` — hydrate, restore (replace + dirty + active switch), duplicate (fresh id, copy title), remove (never-empty).
+- `src/components/shell/workspace-header.test.tsx` — export JSON payload shape, markdown export payload/mime, invalid import → error toast + no modal, valid import → confirm → restore + success toast.
+
+**Quality gates:** `npm run check` green (tsc + eslint + 215 tests), `npm run build` clean, `npm audit` 0 vulnerabilities.
+
+**Architectural notes**
+- Persistence remains behind `StorageAdapter`; restore reuses the validated state and persists through the normal dirty-gated auto-save.
+- Backup schema version stays `SCHEMA_VERSION = 1` (`src/domain/types.ts`); any future data-model change must bump it and keep old backups readable-or-clearly-rejected.
+
 ### Phase 2 — Decision Engine & Framework Panels (2026-11-16; focused review fixes 2026-11-17)
 
 **Added**

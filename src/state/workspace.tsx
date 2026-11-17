@@ -49,7 +49,8 @@ export type WorkspaceAction =
   | { type: "updateProsCons"; id: string; prosCons: ProsCons }
   | { type: "updateComparison"; id: string; comparison: Comparison }
   | { type: "updateSwot"; id: string; swot: Swot }
-  | { type: "setStorageProblem"; problem: StorageProblem | null };
+  | { type: "setStorageProblem"; problem: StorageProblem | null }
+  | { type: "restore"; state: AppState };
 
 /* ------------------------------------------------------------------ */
 /* State                                                               */
@@ -103,6 +104,18 @@ export function workspaceReducer(
 
     case "setStorageProblem":
       return { ...state, storageProblem: action.problem };
+
+    case "restore":
+      // Phase 3 — restore from a validated backup. Replaces the whole
+      // in-memory state and is treated as a user mutation (dirty) so the
+      // debounced save writes the restored state through; a failure then
+      // surfaces via `storageProblem` instead of being lost.
+      return {
+        ...state,
+        dirty: true,
+        data: action.state,
+        storageProblem: null,
+      };
 
     case "select": {
       if (!state.data.decisions.some((d) => d.id === action.id)) return state;
@@ -234,6 +247,8 @@ interface WorkspaceContextValue {
   retrySave: () => void;
   /** Dismiss the storage banner. */
   dismissStorageProblem: () => void;
+  /** Replace the current state with a validated backup. */
+  restore: (state: AppState) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -418,6 +433,11 @@ export function WorkspaceProvider({ children, adapter }: ProviderProps) {
     [],
   );
 
+  const restore = useCallback(
+    (state: AppState) => dispatch({ type: "restore", state }),
+    [],
+  );
+
   const value = useMemo<WorkspaceContextValue>(
     () => ({
       hydrated: state.hydrated,
@@ -434,6 +454,7 @@ export function WorkspaceProvider({ children, adapter }: ProviderProps) {
       updateSwot,
       retrySave,
       dismissStorageProblem,
+      restore,
     }),
     [
       state.hydrated,
@@ -450,6 +471,7 @@ export function WorkspaceProvider({ children, adapter }: ProviderProps) {
       updateSwot,
       retrySave,
       dismissStorageProblem,
+      restore,
     ],
   );
 
